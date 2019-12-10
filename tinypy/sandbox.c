@@ -50,7 +50,7 @@ void tp_free(TP, void *ptr) {
     }
     tp_mem_update(tp);
 }
-
+/*
 void *tp_realloc(TP, void *ptr, unsigned long bytes) {
     unsigned long *temp = (unsigned long *) ptr;
     int diff;
@@ -72,8 +72,9 @@ void *tp_realloc(TP, void *ptr, unsigned long bytes) {
     else {
         return NULL;
     }
-}
 
+}
+*/
 #endif
 
 tp_obj tp_sandbox_(TP) {
