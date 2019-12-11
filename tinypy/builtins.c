@@ -136,7 +136,7 @@ tp_obj* tp_istype(TP) {
     if (tp_cmp(tp,t,tp_string("dict")) == 0) return tp_number(v->type == TP_DICT);
     if (tp_cmp(tp,t,tp_string("number")) == 0) return tp_number(v->type == TP_NUMBER);
    
-    tp_fnc_ *vo=(tp_fnc_*)(v->obj);
+    tp_fnc_ *vo=TP_TO_FNC(v->obj);
     if (tp_cmp(tp,t,tp_string("fnc")) == 0) return tp_number(v->type == TP_FNC && (vo->ftype&2) == 0);
     if (tp_cmp(tp,t,tp_string("method")) == 0) return tp_number(v->type == TP_FNC && (vo->ftype&2) != 0);
     tp_raise(tp_None_ptr,tp_string("(is_type) TypeError: ?"));
@@ -150,7 +150,7 @@ tp_obj* tp_float(TP) {
       case TP_NUMBER: return v;
       case TP_STRING:
         ;
-        tp_string_ *str=(tp_string_*)(v->obj);
+        tp_string_ *str=TP_TO_STRING(v->obj);
         if (str->len < 32) {
            char s[32];
            memset(s,0,str->len+1);
@@ -221,9 +221,9 @@ tp_obj* tp_fpack(TP) {
 }
 
 tp_num tp_fabs(tp_num v) {return v > 0?v:-v;}
-tp_obj* tp_abs(TP) {return tp_number(tp_fabs(((tp_number_*)(tp_float(tp)->obj))->val));}
-tp_obj* tp_int(TP) {return tp_number((long)((tp_number_*)(tp_float(tp)->obj))->val);}
-tp_obj* tp_round(TP) {return tp_number(_roundf(((tp_number_*)(tp_float(tp)->obj))->val));}
+tp_obj* tp_abs(TP) {return tp_number(tp_fabs((TP_TO_NUMBER(tp_float(tp)->obj))->val));}
+tp_obj* tp_int(TP) {return tp_number((long)(TP_TO_NUMBER(tp_float(tp)->obj))->val);}
+tp_obj* tp_round(TP) {return tp_number(_roundf((TP_TO_NUMBER(tp_float(tp)->obj))->val));}
 
 tp_num _roundf(tp_num v) {
     tp_num av = tp_fabs(v);
@@ -252,7 +252,7 @@ tp_obj* tp_mtime(TP) {
 }
 
 int _tp_lookup_(TP,tp_obj* self, tp_obj* k, tp_obj *meta, int depth) {
-    tp_dict_* d = (tp_dict_*)(self->obj);
+    tp_dict_* d = TP_TO_DICT(self->obj);
     int n = _tp_dict_find(tp,d->val,k);
     if (n != -1) {
         meta = d->val->items[n].val;
@@ -306,13 +306,13 @@ int _tp_lookup(TP,tp_obj* self, tp_obj* k, tp_obj *meta) {
 tp_obj* tp_setmeta(TP) {
     tp_obj* self = TP_TYPE(TP_DICT);
     tp_obj* meta = TP_TYPE(TP_DICT);
-    ((tp_dict_*)(self->obj))->val->meta = meta;
+    TP_TO_DICT(self->obj)->val->meta = meta;
     return tp_None_ptr;
 }
 
 tp_obj* tp_getmeta(TP) {
     tp_obj* self = TP_TYPE(TP_DICT);
-    return ((tp_dict_*)(self->obj))->val->meta;
+    return TP_TO_DICT(self->obj)->val->meta;
 }
 
 /* Function: tp_object
@@ -337,7 +337,7 @@ tp_obj* tp_object_new(TP) {
     tp_dict_* d=TP_TO_DICT(self->obj);
 
     d->val->meta = klass;
-    if (d->dtype == 2) { \
+    if (d->dtype == 2) {
         tp_obj* meta=calloc(1, SIZEOF_TP_OBJ);
         if (_tp_lookup(tp,self,tp_string("__init__"),meta)) {
            tp_call(tp,meta,tp->params);

@@ -7,18 +7,18 @@
 #include "misc.h"
 
 tp_obj* _tp_dcall(TP,tp_obj* fn(TP)) {
-//    return fn(tp);
+     return fn(tp);
 }
 
 
 //fixme
 tp_obj* _tp_tcall(TP,tp_obj* fnc) {
-/*
-    if (fnc->fnc.ftype&2) {
-        _tp_list_insert(tp,tp->params.list.val,0,&(fnc->fnc.info->self));
+
+    if (TP_TO_FNC(fnc->obj)->ftype&2) {
+        _tp_list_insert(tp,TP_TO_LIST(tp->params),0,&(TP_TO_FNC(fnc->obj)->info->self));
     }
-    return _tp_dcall(tp,(tp_obj(*)(tp_vm *))fnc->fnc.cfnc);
-*/
+    //return _tp_dcall(tp, (tp_obj(*)(tp_vm *))TP_TO_FNC(fnc->obj)->cfnc);
+
   return fnc;
 
 }
@@ -33,7 +33,7 @@ tp_obj* tp_fnc_new(TP,int t, void *v, tp_obj* c, tp_obj* s, tp_obj* g) {
 
     r->obj = (tp_fnc_*) calloc(1, sizeof(tp_fnc_));
 
-    tp_fnc_* f = (tp_fnc_*) (r->obj);
+    tp_fnc_* f = TP_TO_FNC(r->obj);
     f->ftype = t;
     f->info = info;
     f->cfnc = v;
@@ -93,7 +93,7 @@ tp_obj* tp_data(TP,int magic,void *v) {
     r->type = TP_DATA;
 
     r->obj = (tp_data_*) calloc(1, sizeof(tp_data_));
-    tp_data_* f = (tp_data_*) (r->obj);
+    tp_data_* f = TP_TO_DATA(r->obj);
 
     f->info = calloc(1, sizeof(_tp_data));
     f->val = v;

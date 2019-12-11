@@ -125,7 +125,7 @@ tp_obj* _tp_list_pop(TP, tp_list_ *self, int n, const char *error) {
 }
 
 int _tp_list_find(TP, tp_list_ *self, tp_obj* v) {
-    for (int n=0; n<self->val->len; n++) {
+    for (int n=0; n < self->val->len; n++) {
         if (tp_cmp(tp,v,&(self->val->items[n])) == 0) return n;
     }
     return -1;

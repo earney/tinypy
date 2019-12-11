@@ -182,7 +182,7 @@ void _tp_raise(TP,tp_obj* e) {
         longjmp(tp->nextexpr,1);
 #endif
     }
-    if (e->type != TP_NONE) { tp->ex = e; }
+    if (e->type != TP_NONE) tp->ex = e;
     tp_grey(tp,e);
     longjmp(tp->buf,1);
 }
@@ -248,27 +248,32 @@ tp_obj* tp_call(TP,tp_obj* self, tp_obj* params) {
 
     tp_list_* p = TP_TO_LIST(params->obj);
 
-    if (self->type == TP_DICT) {
+    switch(self->type) {
+      case TP_DICT:
+        ;
         tp_dict_* d = TP_TO_DICT(self->obj);
-        if (d->dtype == 1) {
+        switch(d->dtype) {
+          case 1:
+            ;
             tp_obj * meta = calloc(1, SIZEOF_TP_OBJ);
             if (_tp_lookup(tp,self,tp_string("__new__"),meta)) {
                 _tp_list_insert(tp,p,0,self);
                 return tp_call(tp,meta,params);
             }
-        } else if (d->dtype == 2) {
-            tp_obj* meta = calloc(1, SIZEOF_TP_OBJ);
-            if (_tp_lookup(tp,self,tp_string("__call__"),meta)) {
-               return tp_call(tp,meta,params);
-            }
+            break;
+          case 2:
+            ;
+            tp_obj* _meta = calloc(1, SIZEOF_TP_OBJ);
+            if (_tp_lookup(tp,self,tp_string("__call__"),_meta)) return tp_call(tp,_meta,params);
+            break;
+        }//switch
+        break;
+      case TP_FNC:
+        if (!(TP_TO_FNC(self->obj)->ftype&1)) {
+           tp_obj* r = _tp_tcall(tp,self);
+           tp_grey(tp,r);
+           return r;
         }
-    }
-    if (self->type == TP_FNC && !(TP_TO_FNC(self->obj)->ftype&1)) {
-        tp_obj* r = _tp_tcall(tp,self);
-        tp_grey(tp,r);
-        return r;
-    }
-    if (self->type == TP_FNC) {
         tp_obj* dest = tp_None_ptr;
         tp_fnc_* f = TP_TO_FNC(self->obj);
         tp_frame(tp,&(f->info->globals),
@@ -281,7 +286,8 @@ tp_obj* tp_call(TP,tp_obj* self, tp_obj* params) {
         }
         tp_run(tp,tp->cur);
         return dest;
-    }
+
+    } //switch
     tp_params_v(tp,1,self);
     tp_print(tp);
     tp_raise(tp_None_ptr,tp_string("(tp_call) TypeError: object is not callable"));
@@ -293,7 +299,8 @@ void tp_return(TP, tp_obj* v) {
     if (dest) { dest = v; tp_grey(tp,v); }
 /*     memset(tp->frames[tp->cur].regs,0,TP_REGS_PER_FRAME*sizeof(tp_obj));
        fprintf(stderr,"regs:%d\n",(tp->frames[tp->cur].cregs+1));*/
-    memset(tp->frames[tp->cur].regs-TP_REGS_EXTRA,0,(TP_REGS_EXTRA+tp->frames[tp->cur].cregs)*sizeof(tp_obj));
+    memset(tp->frames[tp->cur].regs-TP_REGS_EXTRA,0,
+           (TP_REGS_EXTRA+tp->frames[tp->cur].cregs)*sizeof(tp_obj));
     tp->cur -= 1;
 }
 
@@ -344,9 +351,9 @@ int tp_step(TP) {
         case TP_IBITNOT:  RA = *tp_bitwise_not(tp,&RB); break;
         case TP_INOT: RA = *tp_number(!tp_bool(tp,&RB)); break;
         case TP_IPASS: break;
-        case TP_IIF: if (tp_bool(tp,&RA)) { cur += 1; } break;
-        case TP_IIFN: if (!tp_bool(tp,&RA)) { cur += 1; } break;
-        case TP_IGET: 
+        case TP_IIF: if (tp_bool(tp,&RA)) cur += 1; break;
+        case TP_IIFN: if (!tp_bool(tp,&RA)) cur += 1; break;
+        case TP_IGET:
             RA = *tp_get(tp,&RB,&RC);
             GA;
             break;
@@ -372,7 +379,7 @@ int tp_step(TP) {
             tp_bounds(tp,cur,sizeof(tp_num)/4);
             #endif
             {
-            //tpnum tmp=(tp_num*)(*++cur).string->val;
+            //RA = *tp_number(++cur);
             //RA = *tp_number(tmp);
             } while (0);
             cur += sizeof(tp_num)/4;
@@ -390,7 +397,9 @@ int tp_step(TP) {
         case TP_IDICT: RA = *tp_dict_n(tp,VC/2,&RB); break;
         case TP_ILIST: RA = *tp_list_n(tp,VC,&RB); break;
         // fixme
-        //case TP_IPARAMS: RA = *tp_params_n(tp,VC,&RB); break;
+        case TP_IPARAMS:
+            printf("fix me.. vm.c:397\n"); 
+            //RA = *tp_params_n(tp,VC,&RB); break;
         case TP_ILEN: RA = *tp_len(tp,&RB); break;
         case TP_IJUMP: cur += SVBC; continue; break;
         case TP_ISETJMP: f->jmp = SVBC?cur+SVBC:0; break;
@@ -409,8 +418,9 @@ int tp_step(TP) {
             }
             break;
         case TP_IGSET: tp_set(tp,f->globals,&RA,&RB); break;
-        case TP_IDEF: {
-/*            RA = tp_def(tp,(*(cur+1)).string.val,f->globals);*/
+        case TP_IDEF:
+            ;
+            //RA = *tp_def(tp, (cur+1).number.val,f->globals);
             #ifdef TP_SANDBOX
             tp_bounds(tp,cur,SVBC);
             #endif
@@ -420,7 +430,6 @@ int tp_step(TP) {
             //    /*tp_string_n((*(cur+1)).string.val,(SVBC-1)*4),*/
             //    tp_string_sub(tp,&(f->code),a,a+(SVBC-1)*4),&(f->globals));
             cur += SVBC; continue;
-            }
             break;
         case TP_IRETURN:
             tp_return(tp,&RA);
@@ -455,6 +464,7 @@ int tp_step(TP) {
             tp_raise(0,tp_string("(tp_step) RuntimeError: invalid instruction"));
             break;
     }// switch
+
     #ifdef TP_SANDBOX
     tp_time_update(tp);
     tp_mem_update(tp);
@@ -467,7 +477,7 @@ int tp_step(TP) {
 
 void _tp_run(TP,int cur) {
     tp->jmp += 1;
-    if (setjmp(tp->buf)) { tp_handle(tp); }
+    if (setjmp(tp->buf)) tp_handle(tp);
     while (tp->cur >= cur && tp_step(tp) != -1);
     tp->jmp -= 1;
 }
