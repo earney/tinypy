@@ -69,7 +69,7 @@ tp_inline_static int _tp_sign(tp_num v) { return (v<0?-1:(v>0?1:0)); }
  */
 
 tp_obj* tp_number(tp_num v) {
-    tp_obj *val=calloc(1, SIZEOF_TP_OBJ);
+    tp_obj *val=calloc(1, sizeof(tp_obj));
     val->type = TP_NUMBER;
     val->obj = (tp_number_ *) calloc(1, sizeof(tp_number_));
     TP_TO_NUMBER(val->obj)->val = v;
@@ -98,10 +98,10 @@ tp_obj* tp_string_n(char const *v,int n) {
     //DBGPRINT2(9, "string:'%s'\n", v);
     //DBGPRINT2(9, "len:'%d'\n", n);
 
-    tp_obj * o = calloc(1, SIZEOF_TP_OBJ);
+    tp_obj * o = calloc(1, sizeof(tp_obj));
     if (!o) {
         printf("tp_string_n:Error cannot allocate memory\n");
-        printf("'%s', size='%d'\n", v, SIZEOF_TP_OBJ);
+        printf("'%s', size='%d'\n", v, sizeof(tp_obj));
         exit(0);
     }
     //static tp_string_ s = {TP_STRING, 0,v,n};

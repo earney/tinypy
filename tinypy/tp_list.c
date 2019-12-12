@@ -15,13 +15,13 @@ void _tp_list_realloc(TP, tp_list_ *self,int len) {
     if (!len) len=1;
     DBGPRINT2(DLEVEL, "items ptr=%d\n", self->val->items);
     if (self->val->len == 0) {
-       self->val->items = calloc(2, SIZEOF_TP_OBJ);
+       self->val->items = calloc(2, sizeof(tp_obj));
        self->val->alloc = 2;
     } else {
-       self->val->items = realloc(self->val->items, len*SIZEOF_TP_OBJ);
+       self->val->items = realloc(self->val->items, len*sizeof(tp_obj));
        if (self->val->items == NULL) {
           printf("_tp_list_realloc:Cannot allocate memory..\n");
-          printf("Cannot allocate %d bytes of memory\n", len*SIZEOF_TP_OBJ);
+          printf("Cannot allocate %d bytes of memory\n", len*sizeof(tp_obj));
           exit(0);
        }
        self->val->alloc = len;
@@ -35,7 +35,6 @@ void _tp_list_realloc(TP, tp_list_ *self,int len) {
 
 void _tp_list_set(TP,tp_list_ *self,int k, tp_obj* v, const char *error) {
     DBGPRINT1(9,"begin:_tp_list_set\n");
-    tp; // so sdcc doesnt' complain about warning 85
     DBGPRINT2(9, "k=%d\n", k);
     DBGPRINT2(9, "self->len=%d\n", self->val->len);
     DBGASSERT(9, self->val->len >= 0);
@@ -59,7 +58,6 @@ void _tp_list_free(TP, tp_list_ *self) {
 }
 
 tp_obj* _tp_list_get(TP, tp_list_ *self,int k,const char *error) {
-    tp; // so sdcc doesnt' complain about warning 85
     if (k >= self->val->len) {
         tp_raise(tp_None_ptr,tp_string("(_tp_list_get) KeyError"));
     }
@@ -80,7 +78,7 @@ void _tp_list_insertx(TP, tp_list_ *self, int n, tp_obj* v) {
     DBGPRINT2(9, "\nlist len %d\n", self->val->len);
     if (n < self->val->len) {
        memmove(&(self->val->items[n+1]),&(self->val->items[n]),
-               SIZEOF_TP_OBJ*(self->val->len-n));
+               sizeof(tp_obj)*(self->val->len-n));
        DBGPRINT2(9, "\nlist after memmove alloc %d\n", self->val->alloc);
     }
     self->val->items[n] = *v;
@@ -117,7 +115,7 @@ tp_obj* _tp_list_pop(TP, tp_list_ *self, int n, const char *error) {
     tp_obj* r = _tp_list_get(tp,self,n,error);
     if (n != self->val->len-1) {
        memmove(&(self->val->items[n]),&(self->val->items[n+1]),
-                 SIZEOF_TP_OBJ*(self->val->len-(n+1)));
+                 sizeof(tp_obj)*(self->val->len-(n+1)));
     }
     self->val->len -= 1;
     DBGPRINT2(9, "%d\n", self->val->len);
@@ -144,23 +142,22 @@ tp_obj* tp_index(TP) {
 tp_list_ *_tp_list_new(TP) {
     tp_list_ * l = calloc(1, sizeof(tp_list_));
     l->val = calloc(1, sizeof(_tp_list));
-    l->val->items = calloc(1, SIZEOF_TP_OBJ);
+    l->val->items = calloc(1, sizeof(tp_obj));
     l->val->alloc=1;
 
     return l;
 }
 
 tp_obj* _tp_list_copy(TP, tp_obj* rr) {
-    tp_obj *val = calloc(1, SIZEOF_TP_OBJ);
+    tp_obj *val = calloc(1, sizeof(tp_obj));
     val->type=TP_LIST;
     tp_list_ *o = TP_TO_LIST(rr->obj);
     tp_list_ *r = _tp_list_new(tp);
 
-    tp; // so sdcc doesnt' complain about warning 85
     r = o;
     r->val->gci = 0;
-    r->val->items = calloc(o->val->len, SIZEOF_TP_OBJ);
-    memcpy(r->val->items,o->val->items, SIZEOF_TP_OBJ*(o->val->len));
+    r->val->items = calloc(o->val->len, sizeof(tp_obj));
+    memcpy(r->val->items,o->val->items, sizeof(tp_obj)*(o->val->len));
 
     val->obj=(tp_list_*) calloc(1, sizeof(tp_list_));
     val->obj = r;
@@ -200,7 +197,7 @@ tp_obj* tp_extend(TP) {
 
 tp_obj* tp_list_nt(TP) {
     DBGPRINT1(9,"begin:tp_list_nt\n");
-    tp_obj *r=calloc(1, SIZEOF_TP_OBJ);
+    tp_obj *r=calloc(1, sizeof(tp_obj));
     DBGPRINT2(8, "calloc:'%d'\n", r);
     r->obj= (tp_list_*) calloc(1, sizeof(tp_list_));
     DBGPRINT2(8, "calloc:'%u'\n", r->obj);
@@ -245,7 +242,7 @@ int _tp_sort_cmp(tp_obj *a,tp_obj *b) {
 
 tp_obj* tp_sort(TP) {
     tp_obj* self = TP_OBJ();
-    qsort(TP_TO_LIST(self->obj)->val->items, TP_TO_LIST(self->obj)->val->len, SIZEOF_TP_OBJ,
+    qsort(TP_TO_LIST(self->obj)->val->items, TP_TO_LIST(self->obj)->val->len, sizeof(tp_obj),
           (int(*)(const void*,const void*))_tp_sort_cmp);
     return tp_None_ptr;
 }

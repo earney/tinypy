@@ -5,7 +5,7 @@
 #ifndef TP_MISC
 #define TP_MISC
 
-tp_obj* _tp_dcall(TP,tp_obj* fnc(TP));
+tp_obj* _tp_dcall(TP,tp_obj* (*fnc)(TP));
 tp_obj* _tp_tcall(TP,tp_obj* fnc);
 tp_obj* tp_fnc_new(TP,int t, void *v, tp_obj* c,tp_obj* s, tp_obj* g);
 tp_obj* tp_def(TP,tp_obj* code, tp_obj* g);

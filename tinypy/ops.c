@@ -59,7 +59,6 @@ tp_obj* tp_str(TP,tp_obj* self) {
  * is returned.
  */
 int tp_bool(TP,tp_obj* v) {
-    tp; // so sdcc doesn't complain about warning 85
     switch(v->type) {
         case TP_NUMBER: return TP_TO_NUMBER(v->obj)->val != 0;
         case TP_NONE: return 0;
@@ -160,12 +159,12 @@ tp_obj* tp_get(TP,tp_obj* self, tp_obj* k) {
         ;
         tp_dict_ * d = TP_TO_DICT(self->obj);
         if (d->dtype == 2) { \
-           tp_obj *meta = calloc(1, SIZEOF_TP_OBJ);
+           tp_obj *meta = calloc(1, sizeof(tp_obj));
            if (_tp_lookup(tp,self,tp_string("__get__"),meta)) {
               return tp_call(tp,meta,tp_params_v(tp,1,k));
            }
         }
-        tp_obj *r=calloc(1, SIZEOF_TP_OBJ);
+        tp_obj *r=calloc(1, sizeof(tp_obj));
         if (d->dtype && _tp_lookup(tp,self,k,r)) return r;
         // delete r?
         return _tp_dict_get(tp,d->val,k,"tp_get");
@@ -185,7 +184,7 @@ tp_obj* tp_get(TP,tp_obj* self, tp_obj* k) {
             if (tp_cmp(tp,tp_string("extend"),k) == 0) return tp_method(tp,self,tp_extend);
             if (tp_cmp(tp,tp_string("*"),k) == 0) {
                 tp_params_v(tp,1,self);
-                tp_obj *r=calloc(1, SIZEOF_TP_OBJ);
+                tp_obj *r=calloc(1, sizeof(tp_obj));
                 r = tp_copy(tp);
                 TP_TO_LIST(self->obj)->val->len=0;
                 return r;
@@ -219,19 +218,32 @@ tp_obj* tp_get(TP,tp_obj* self, tp_obj* k) {
     } //switch
 
     if (k->type == TP_LIST) {
-        int a,b,l;
-        tp_obj* tmp;
-        l = TP_TO_NUMBER(tp_len(tp,self)->obj)->val;
+        int a,b,l = TP_TO_NUMBER(tp_len(tp,self)->obj)->val;
 
-        tmp = tp_get(tp,k,tp_number(0));
-        if (tmp->type == TP_NUMBER) { a = TP_TO_NUMBER(tmp->obj)->val; }
-        else if(tmp->type == TP_NONE) { a = 0; }
-        else { tp_raise(tp_None_ptr,tp_string("(tp_get) TypeError: indices must be numbers")); }
+        tp_obj *tmp = tp_get(tp,k,tp_number(0));
+
+        switch(tmp->type) {
+          case TP_NUMBER:
+            a = TP_TO_NUMBER(tmp->obj)->val;
+            break;
+          case TP_NONE:
+            a = 0;
+            break;
+          default:
+            tp_raise(tp_None_ptr,tp_string("(tp_get) TypeError: indices must be numbers")); 
+        }//switch
 
         tmp = tp_get(tp,k,tp_number(1));
-        if (tmp->type == TP_NUMBER) { b = TP_TO_NUMBER(tmp->obj)->val; }
-        else if(tmp->type == TP_NONE) { b = l; }
-        else { tp_raise(tp_None_ptr,tp_string("(tp_get) TypeError: indices must be numbers")); }
+        switch(tmp->type) {
+          case TP_NUMBER:
+            b = TP_TO_NUMBER(tmp->obj)->val;
+            break;
+          case TP_NONE:
+            b = l;
+            break;
+          default:
+            tp_raise(tp_None_ptr,tp_string("(tp_get) TypeError: indices must be numbers")); 
+        }//switch
 
         a = _tp_max(0,(a<0?l+a:a));
         b = _tp_min(l,(b<0?l+b:b));
@@ -289,7 +301,7 @@ void tp_set(TP,tp_obj* self, tp_obj* k, tp_obj* v) {
         DBGPRINT1(8,"is a TP_DICT\n");
         tp_dict_* d = TP_TO_DICT(self->obj);
         if (d->dtype == 2) {
-           tp_obj * meta = calloc(1, SIZEOF_TP_OBJ);
+           tp_obj * meta = calloc(1, sizeof(tp_obj));
            if (_tp_lookup(tp,self,tp_string("__set__"),meta)) {
               tp_call(tp,meta,tp_params_v(tp,2,k,v));
               return;
@@ -364,11 +376,11 @@ tp_obj* tp_add(TP,tp_obj* a, tp_obj* b) {
 }
 
 tp_obj* tp_mul(TP,tp_obj* a, tp_obj* b) {
-    if (a->type == TP_NUMBER && a->type == b->type)
-        return tp_number(TP_TO_NUMBER(a->obj)->val* TP_TO_NUMBER(b->obj)->val);
+    if (a->type == TP_NUMBER && b->type == TP_NUMBER)
+       return tp_number(TP_TO_NUMBER(a->obj)->val* TP_TO_NUMBER(b->obj)->val);
 
     if ((a->type == TP_STRING && b->type == TP_NUMBER) ||
-               (a->type == TP_NUMBER && b->type == TP_STRING)) {
+        (a->type == TP_NUMBER && b->type == TP_STRING)) {
         //fixme
         //tp_raise(tp_None_ptr,tp_string("(tp_mul) TypeError: string"));
 
@@ -412,7 +424,7 @@ tp_obj* tp_len(TP,tp_obj* self) {
 }
 
 int tp_cmp(TP,tp_obj* a, tp_obj* b) {
-    if (a->type != b->type) return a->type-b->type;
+    if (a->type != b->type) return a->type - b->type;
     switch(a->type) {
         case TP_NONE: return 0;
         case TP_NUMBER: return _tp_sign(TP_TO_NUMBER(a->obj)->val - TP_TO_NUMBER(b->obj)->val);

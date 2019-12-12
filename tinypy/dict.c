@@ -30,12 +30,14 @@ void _tp_dict_free(TP, _tp_dict *self) {
     self = NULL;
 }
 
+/*
 void _tp_dict_reset(_tp_dict *self) {
-       memset(self->items,0,(self->alloc)*sizeof(tp_item));
-       self->len = 0;
-       self->used = 0;
-       self->cur = 0;
+     memset(self->items,0,(self->alloc)*sizeof(tp_item));
+     self->len = 0;
+     self->used = 0;
+     self->cur = 0;
 }
+*/
 
 int tp_hash(TP,tp_obj* v) {
     DBGPRINT1(DLEVEL, "begin:tp_hash\n");
@@ -49,7 +51,7 @@ int tp_hash(TP,tp_obj* v) {
         case TP_LIST: ;
             tp_list_* lst = TP_TO_LIST(v->obj);
             int r = lst->val->len;
-            for(int n=0; n < lst->val->len; n++) {
+            for(int n=0; n < r; n++) {
                  tp_obj* vv = &(lst->val->items[n]);
                  if (vv->type != TP_LIST) {
                     r+=tp_hash(tp,&(lst->val->items[n]));
@@ -76,6 +78,7 @@ void _tp_dict_hash_set(TP,_tp_dict *self, int hash, tp_obj* k, tp_obj* v) {
         tp_item * item = calloc(1, sizeof(tp_item));
         if (!item) {
            printf("_tp_dict_hash_set:out of memory..\n");
+           printf("Cannot allocate %d bytes of memory\n", sizeof(tp_item));
            exit(0);
         }
         item->used = 1;
@@ -154,11 +157,11 @@ int _tp_dict_find(TP,_tp_dict *self,tp_obj* k) {
 void _tp_dict_setx(TP,_tp_dict *self,tp_obj* k, tp_obj* v) {
     DBGPRINT1(9, "begin:_tp_dict_setx\n");
     //DBGPRINT2(9, "self.type='%d'\n", self->type);
-    printf("\n");
+    //printf("\n");
     //DBGPRINT1(9, _debugprint_obj(k));
-    printf("\n");
+    //printf("\n");
     //DBGPRINT1(9, _debugprint_obj(v));
-    printf("\n");
+    //printf("\n");
     int hash = tp_hash(tp,k);
     DBGPRINT2(9, "hash='%d'\n", hash);
     DBGPRINT2(9, "len='%d'\n", self->len);
@@ -166,6 +169,7 @@ void _tp_dict_setx(TP,_tp_dict *self,tp_obj* k, tp_obj* v) {
     int n = _tp_dict_hash_find(tp,self,hash,k);
     DBGPRINT2(9, "hash_find='%d'\n", n);
     if (n == -1) {
+        /*
         if (self->len >= (self->alloc/2)) {
             DBGPRINT1(9, "self->len >= self->alloc*1.5\n");
             _tp_dict_tp_realloc(tp,self,(self->alloc*1.5));
@@ -173,6 +177,9 @@ void _tp_dict_setx(TP,_tp_dict *self,tp_obj* k, tp_obj* v) {
             DBGPRINT1(9, "self->used >= self->alloc*3/4\n");
             _tp_dict_tp_realloc(tp,self,self->alloc);
         }
+        */
+        //this is optimized for memory, not execution speed
+        if (self->len >= self->alloc) _tp_dict_tp_realloc(tp,self, self->len+1);
         _tp_dict_hash_set(tp,self,hash,k,v);
     } else {
         self->items[n].val = v;
@@ -212,22 +219,24 @@ void _tp_dict_del(TP,_tp_dict *self,tp_obj* k, const char *error) {
     self->len -= 1;
 }
 
+/*
 _tp_dict *_tp_dict_new(TP) {
     return (_tp_dict*) calloc(1, sizeof(_tp_dict));
 }
+*/
 
 tp_obj* _tp_dict_copy(TP,tp_obj* rr) {
     DBGPRINT1(9, "begin:_tp_dict_copy\n");
     DBGASSERT(9, rr->type == TP_DICT);
-    tp_obj *to = calloc(1, SIZEOF_TP_OBJ);
+    tp_obj *to = calloc(1, sizeof(tp_obj));
     _tp_dict *o = TP_TO_DICT(rr->obj)->val;
-    _tp_dict *r = _tp_dict_new(tp);
+    _tp_dict *r = (_tp_dict*) calloc(1, sizeof(_tp_dict));
     r = o;
     r->gci = 0;
     r->items = calloc(o->alloc, sizeof(tp_item));
     memcpy(r->items,o->items,sizeof(tp_item)*o->alloc);
 
-    r->meta=calloc(1, SIZEOF_TP_OBJ);
+    r->meta=calloc(1, sizeof(tp_obj));
     memset(r->meta, 0, sizeof(tp_obj));
 
     to->obj = (tp_dict_ *) calloc(1, sizeof(tp_dict_));
@@ -280,15 +289,15 @@ tp_obj* tp_merge(TP) {
  */
 tp_obj* tp_dict(TP) {
     DBGPRINT1(DLEVEL, "begin:tp_dict\n");
-    tp_obj *r = calloc(1, SIZEOF_TP_OBJ);
+    tp_obj *r = calloc(1, sizeof(tp_obj));
     DBGPRINT1(DLEVEL, "tp_dict:after allocation\n");
 
     r->obj = (tp_dict_*) calloc(1, sizeof(tp_dict_));
     tp_dict_* d= TP_TO_DICT(r->obj);
-    d->val = _tp_dict_new(tp);
+    d->val = (_tp_dict*) calloc(1, sizeof(_tp_dict));
     d->dtype = 1;
 
-    d->val->meta=calloc(1, SIZEOF_TP_OBJ);
+    d->val->meta=calloc(1, sizeof(tp_obj));
 
     r->type = TP_DICT;
     DBGPRINT1(DLEVEL, "end:tp_dict\n");

@@ -15,9 +15,6 @@
 
 tp_obj* tp_string_t(TP, int n) {
     tp_obj *r = tp_string_n(0,n);
-    //tp;  // so sdcc doesn't give a warning about unreferenced fun args.
-    //r->string.info = (_tp_string*)tp_malloc(tp, sizeof(_tp_string)+n);
-    //r->string.info->len = n;
     tp_string_* s1 = TP_TO_STRING(r->obj);
     memcpy(s1->val, 0, n); //, r->string.info->s;
     s1->len=n;
@@ -42,10 +39,10 @@ tp_obj* tp_string_copy(TP, const char *s, int n) {
  */
 tp_obj* tp_string_sub(TP, tp_obj* s, int a, int b) {
     int l = TP_TO_STRING(s->obj)->len;
-    tp;  // so sdcc doesn't give a warning about unreferenced fun args.
+
     a = _tp_max(0,(a<0?l+a:a));
     b = _tp_min(l,(b<0?l+b:b));
-    tp_obj *r = calloc(1, SIZEOF_TP_OBJ);
+    tp_obj *r = calloc(1, sizeof(tp_obj));
     r = s;
     r->obj=(tp_string_*) calloc(1, sizeof(tp_string_));
     tp_string_* s1 = TP_TO_STRING(r->obj);
@@ -169,6 +166,7 @@ tp_obj* tp_str2(TP) {
 tp_obj* tp_chr(TP) {
     int v = TP_NUM();
     tp_raise(tp_None_ptr,tp_string("(tp_chr) not implemented"));
+    return tp_string_n((char*) v, 1);
    // return tp_string_n(tp->chars[(unsigned char)v],1);
 }
 
@@ -189,7 +187,7 @@ tp_obj* tp_strip(TP) {
     int a = l, b = 0;
     char *s;
     for (int i=0; i<l; i++) {
-        switch(v[i]) {
+        switch(*(v+i)) {
           case ' ':
           case '\n':
           case '\t':
@@ -202,7 +200,7 @@ tp_obj* tp_strip(TP) {
     }
     if ((b-a) < 0) return tp_string("");
 
-    tp_obj * r = calloc(1, SIZEOF_TP_OBJ);
+    tp_obj * r = calloc(1, sizeof(tp_obj));
     r = tp_string_t(tp,b-a);
     //s = r.string.info->s;
     s = TP_TO_STRING(r->obj)->val;

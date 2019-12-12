@@ -25,11 +25,11 @@ tp_vm *_tp_init(void) {
     DBGPRINT1(DLEVEL, "begin:_tp_init\n");
     tp_vm *tp = calloc(1, sizeof(tp_vm));
 #ifdef TP_SANDBOX
-    tp->time_limit = TP_NO_LIMIT;
+    //tp->time_limit = TP_NO_LIMIT;
 #endif
     //fixme
     //tp->clocks = clock();
-    tp->time_elapsed = 0.0;
+    //tp->time_elapsed = 0.0;
 #ifdef TP_SANDBOX
     tp->mem_limit = TP_NO_LIMIT;
     tp->mem_exceeded = 0;
@@ -57,22 +57,22 @@ tp_vm *_tp_init(void) {
          //printf("alloc = %d\n", tp->_regs->obj->list->val->alloc);
          tp_set(tp,tp->_regs,tp_None_ptr,tp_None_ptr);
     }
-    DBGPRINT1(8,"\ntp->builtins\n");
+    DBGPRINT1(DLEVEL,"\ntp->builtins\n");
     tp->builtins = tp_dict(tp);
-    DBGASSERT(9, tp->builtins->type == TP_DICT);
-    DBGPRINT1(8,"\ntp->modules\n");
+    DBGASSERT(DLEVEL, tp->builtins->type == TP_DICT);
+    DBGPRINT1(DLEVEL,"\ntp->modules\n");
     tp->modules = tp_dict(tp);
     DBGASSERT(DLEVEL, tp->modules->type == TP_DICT);
-    DBGPRINT1(8,"\ntp->params\n");
+    DBGPRINT1(DLEVEL,"\ntp->params\n");
     //tp->_params = tp_list(tp);
     //assert(tp->_params->type == TP_LIST);
 
-    DBGPRINT1(8, "begin:TP_FRAMES\n");
+    DBGPRINT1(DLEVEL, "begin:TP_FRAMES\n");
     //for (int i=0; i<TP_FRAMES; i++) {
     //    DBGPRINT2(9,"TP_FRAMES[%d]\n", i);
     //tp_set(tp,tp->_params,tp_None_ptr,tp_list(tp));
     //}
-    DBGPRINT1(8, "end:TP_FRAMES\n");
+    DBGPRINT1(DLEVEL, "end:TP_FRAMES\n");
     //tp_set(tp,&(tp->root),tp_None_ptr,&(tp->builtins));
     //tp_set(tp,&(tp->root),tp_None_ptr,&(tp->modules));
     //tp_set(tp,&(tp->root),tp_None_ptr,&(tp->_regs));
@@ -87,25 +87,25 @@ tp_vm *_tp_init(void) {
     tp_set(tp,&(tp->builtins),tp_string("BUILTINS"),&(tp->builtins));
     */
 
-    DBGPRINT1(8,"sys=tp_dict\n");
+    DBGPRINT1(DLEVEL,"sys=tp_dict\n");
     tp_obj* sys = tp_dict(tp);
     DBGASSERT(9, sys->type==TP_DICT);
-    DBGPRINT1(0, "set sys.version\n");
+    DBGPRINT1(DLEVEL, "set sys.version\n");
     tp_obj * version = tp_string("version");
-    DBGPRINT1(9, version->type == TP_STRING);
+    DBGPRINT1(DLEVEL, version->type == TP_STRING);
     //assert(strcmp(version->obj->string->val, "version") == 0);
     tp_obj * tiny = tp_string("tinypy 0.1");
     //assert(strcmp(tiny->obj->string->val, "tinypy 0.1") == 0);
     //printf("version:'%s'\n", version->obj->string->val);
     //printf("tiny:'%s'\n", tiny->obj->string->val);
-    DBGPRINT1(9, tiny->type == TP_STRING);
+    DBGPRINT1(DLEVEL, tiny->type == TP_STRING);
     tp_set(tp, sys, version, tiny);
-    DBGPRINT1(0, "set sys in modules\n");
+    DBGPRINT1(DLEVEL, "set sys in modules\n");
     tp_set(tp,tp->modules, tp_string("sys"), sys);
     //tp->regs = tp->_regs.list.val->items;
-    DBGPRINT1(0, "_tp_init::before tp_full\n");
+    DBGPRINT1(DLEVEL, "_tp_init::before tp_full\n");
     tp_full(tp);
-    DBGPRINT1(0, "end:_tp_init\n");
+    DBGPRINT1(DLEVEL, "end:_tp_init\n");
     return tp;
 }
 
@@ -200,7 +200,7 @@ void tp_print_stack(TP) {
         tp_echo(tp,tp->frames[i].line);
         printf("\n");
     }
-    printf("\nException:\n"); 
+    printf("\nException:\n");
     tp_echo(tp,tp->ex); 
     printf("\n");
 }
@@ -255,7 +255,7 @@ tp_obj* tp_call(TP,tp_obj* self, tp_obj* params) {
         switch(d->dtype) {
           case 1:
             ;
-            tp_obj * meta = calloc(1, SIZEOF_TP_OBJ);
+            tp_obj * meta = calloc(1, sizeof(tp_obj));
             if (_tp_lookup(tp,self,tp_string("__new__"),meta)) {
                 _tp_list_insert(tp,p,0,self);
                 return tp_call(tp,meta,params);
@@ -263,7 +263,7 @@ tp_obj* tp_call(TP,tp_obj* self, tp_obj* params) {
             break;
           case 2:
             ;
-            tp_obj* _meta = calloc(1, SIZEOF_TP_OBJ);
+            tp_obj* _meta = calloc(1, sizeof(tp_obj));
             if (_tp_lookup(tp,self,tp_string("__call__"),_meta)) return tp_call(tp,_meta,params);
             break;
         }//switch
@@ -297,8 +297,8 @@ tp_obj* tp_call(TP,tp_obj* self, tp_obj* params) {
 void tp_return(TP, tp_obj* v) {
     tp_obj *dest = tp->frames[tp->cur].ret_dest;
     if (dest) { dest = v; tp_grey(tp,v); }
-/*     memset(tp->frames[tp->cur].regs,0,TP_REGS_PER_FRAME*sizeof(tp_obj));
-       fprintf(stderr,"regs:%d\n",(tp->frames[tp->cur].cregs+1));*/
+    memset(tp->frames[tp->cur].regs,0,TP_REGS_PER_FRAME*sizeof(tp_obj));
+    //fprintf(stderr,"regs:%d\n",(tp->frames[tp->cur].cregs+1));
     memset(tp->frames[tp->cur].regs-TP_REGS_EXTRA,0,
            (TP_REGS_EXTRA+tp->frames[tp->cur].cregs)*sizeof(tp_obj));
     tp->cur -= 1;
@@ -590,7 +590,7 @@ void tp_builtins(TP) {
                tp_fnc(tp, (tp_obj * (TP)) b[i].f));
     }
 */
-    //tp_obj *o; // = calloc(1, SIZEOF_TP_OBJ);
+    //tp_obj *o; // = calloc(1, sizeof(tp_obj));
     tp_obj *o = tp_object(tp);
     //fixme
     //error 10: 'lvalue' required for 'assignment' operation.
@@ -649,11 +649,11 @@ tp_obj* tp_eval(TP, const char *text, tp_obj* globals) {
  */
 tp_vm *tp_init(int argc, char *argv[]) {
     tp_vm *tp = _tp_init();
-    DBGPRINT1(0, "\ntp_builtins\n");
+    DBGPRINT1(DLEVEL, "\ntp_builtins\n");
     tp_builtins(tp);
-    DBGPRINT1(0, "\ntp_args\n");
-    tp_args(tp,argc,argv);
-    DBGPRINT1(0, "\ntp_compiler\n");
+    DBGPRINT1(DLEVEL, "\ntp_args\n");
+    //tp_args(tp,argc,argv);
+    DBGPRINT1(DLEVEL, "\ntp_compiler\n");
     tp_compiler(tp);
     return tp;
 }

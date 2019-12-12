@@ -22,12 +22,12 @@ int main(int argc, char *argv[]) {
     //   printf("Error.. You must enter a tpc file\n");
     //   return 0;
     //}
-    DBGPRINT1(9, "begin:vmmain\n");
+    DBGPRINT1(9, "begin:vmm%ain\n");
     char* arg[] = {""};
     //tp_vm *tp = tp_init(argc,argv);
     tp_vm *tp = tp_init(0, arg);
     //tp_import(tp,argv[1],"__main__",0,0);
-    printf("\nimport main module\n");
+    DBGPRINT1(9, "\nimport main module\n");
     tp_import(tp,"main1","main",tp_main1,0);
     tp_ez_call(tp, "main1", "main1", tp_None_ptr);
     tp_deinit(tp);

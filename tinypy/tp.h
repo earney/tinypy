@@ -70,6 +70,7 @@ typedef double tp_num;
 typedef struct tp_number_ {
     tp_num val;
 } tp_number_;
+
 typedef struct tp_string_ {
     char *val;
     unsigned char len;
@@ -81,12 +82,12 @@ typedef struct tp_list_ {
 
 typedef struct tp_dict_ {
     struct _tp_dict *val;
-    char dtype;
+    unsigned char dtype;
 } tp_dict_;
 
 typedef struct tp_fnc_ {
     struct _tp_fnc *info;
-    char ftype;
+    unsigned char ftype;
     void *cfnc;
 } tp_fnc_;
 
@@ -132,7 +133,7 @@ typedef union tp_type_ {
 */
 
 typedef struct tp_gci_ {
-     char type;
+     unsigned char type;
      int *data;
 } gci;
 
@@ -140,7 +141,7 @@ typedef struct tp_gci_ {
 typedef struct tp_obj {
     tp_obj_type type;
     void * obj;
-    struct { char type; int *data; } gci;
+    struct { unsigned char type; int *data; } gci;
 } tp_obj;
 
 
@@ -153,14 +154,14 @@ typedef struct _tp_string {
 */
 
 typedef struct _tp_list {
-    char gci;
+    int gci;
     tp_obj *items;
     unsigned char len;
     int alloc;
 } _tp_list;
 
 typedef struct tp_item {
-    char used;
+    unsigned char used;
     int hash;
     tp_obj *key;
     tp_obj *val;
@@ -178,7 +179,7 @@ typedef struct _tp_dict {
 } _tp_dict;
 
 typedef struct _tp_fnc {
-    char gci;
+    unsigned char gci;
     tp_obj self;
     tp_obj globals;
     tp_obj code;
@@ -208,14 +209,15 @@ typedef struct tp_frame_ {
     int cregs;
 } tp_frame_;
 
-const short SIZEOF_TP_OBJ = sizeof(tp_obj);
+//const short SIZEOF_TP_OBJ = sizeof(tp_obj);
+//const short SIZEOF_TP_ITEM = sizeof(tp_item);
 
 #define TP_GCMAX 4096
-#define TP_FRAMES 8
+#define TP_FRAMES 4
 #define TP_REGS_EXTRA 2
-/* #define TP_REGS_PER_FRAME 256*/
+#define TP_REGS_PER_FRAME 256
 //#define TP_REGS 16384
-#define TP_REGS 8
+#define TP_REGS 4
 
 /* Type: tp_vm
  * Representation of a tinypy virtual machine instance.
@@ -259,9 +261,9 @@ typedef struct tp_vm {
     tp_list_ *black;
     int steps;
     /* sandbox */
-    clock_t clocks;
-    double time_elapsed;
-    double time_limit;
+    //clock_t clocks;
+    //double time_elapsed;
+    //double time_limit;
 #ifdef TP_SANDBOX
     unsigned int mem_limit;
     unsigned int mem_used;

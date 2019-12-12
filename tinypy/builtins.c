@@ -338,7 +338,7 @@ tp_obj* tp_object_new(TP) {
 
     d->val->meta = klass;
     if (d->dtype == 2) {
-        tp_obj* meta=calloc(1, SIZEOF_TP_OBJ);
+        tp_obj* meta=calloc(1, sizeof(tp_obj));
         if (_tp_lookup(tp,self,tp_string("__init__"),meta)) {
            tp_call(tp,meta,tp->params);
         }
