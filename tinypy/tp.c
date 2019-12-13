@@ -5,6 +5,7 @@
 #include <stdio.h>
 
 #include "tp.h"
+#include "bc.c"
 #include "vm.h"
 #include "builtins.h"
 
@@ -28,8 +29,10 @@ void tp_compiler(TP) {
 #endif
 */
 
-void tp_compiler(TP) {
-   //tp_import(tp,0,"main1",tp_main,sizeof(tp_main));
+
+
+void tp_compiler() {
+   tp_import(0,"main1",tp_main1,sizeof(tp_main1));
 }
 
 tp_obj* tp_string(char const *v) {
@@ -81,7 +84,7 @@ tp_inline_static void tp_echo(tp_obj* e) {
     //DBGPRINT1(9,"begin:tp_echo:\n");
     //DBGPRINT2(9, "%s\n", e->string.val);
     if (e->type != TP_STRING) {
-      e=tp_str(tp, e);
+      e=tp_str(e);
     }
     printf("%s", TP_TO_STRING(e->obj)->val);
     //DBGPRINT1(9,"end:tp_echo\n");

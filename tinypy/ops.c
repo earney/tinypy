@@ -80,14 +80,14 @@ int tp_bool(tp_obj* v) {
 tp_obj* tp_has(tp_obj* self, tp_obj* k) {
     switch(self->type) {
       case TP_DICT:
-        if (_tp_dict_find(tp,TP_TO_DICT(self->obj)->val,k) != -1) return tp_True;
+        if (_tp_dict_find(TP_TO_DICT(self->obj)->val,k) != -1) return tp_True;
         return tp_False;
       case TP_STRING:
         if (k->type == TP_STRING)
            return tp_number(_tp_str_index(self,k)!=-1);
         break;
       case TP_LIST:
-        return tp_number(_tp_list_find(tp,TP_TO_LIST(self->obj),k)!=-1);
+        return tp_number(_tp_list_find(TP_TO_LIST(self->obj),k)!=-1);
     }
     tp_raise(tp_None_ptr,tp_string("(tp_has) TypeError: iterable argument required"));
 }
@@ -99,7 +99,7 @@ tp_obj* tp_has(tp_obj* self, tp_obj* k) {
  *
  * Note that unlike with Python, you cannot use this to remove list items.
  */
-void tp_del(TP,tp_obj* self, tp_obj* k) {
+void tp_del(tp_obj* self, tp_obj* k) {
     if (self->type == TP_DICT) {
         _tp_dict_del(TP_TO_DICT(self->obj)->val,k,"tp_del");
         return;
@@ -163,7 +163,7 @@ tp_obj* tp_get(tp_obj* self, tp_obj* k) {
         if (d->dtype == 2) { \
            tp_obj *meta = calloc(1, sizeof(tp_obj));
            if (_tp_lookup(self,tp_string("__get__"),meta)) {
-              return tp_call(meta,tp_params_v(tp,1,k));
+              return tp_call(meta,tp_params_v(1,k));
            }
         }
         tp_obj *r=calloc(1, sizeof(tp_obj));
@@ -177,7 +177,7 @@ tp_obj* tp_get(tp_obj* self, tp_obj* k) {
             int l = TP_TO_NUMBER(tp_len(self)->obj)->val;
             int n = TP_TO_NUMBER(k->obj)->val;
             n = (n<0?l+n:n);
-            return _tp_list_get(tp,TP_TO_LIST(self->obj),n,"tp_get");
+            return _tp_list_get(TP_TO_LIST(self->obj),n,"tp_get");
           case TP_STRING:
             if (tp_cmp(tp_string("append"),k) == 0) return tp_method(self,tp_append);
             if (tp_cmp(tp_string("pop"),k) == 0)  return tp_method(self,tp_pop);
@@ -187,7 +187,7 @@ tp_obj* tp_get(tp_obj* self, tp_obj* k) {
             if (tp_cmp(tp_string("*"),k) == 0) {
                 tp_params_v(1,self);
                 tp_obj *r=calloc(1, sizeof(tp_obj));
-                r = tp_copy(tp);
+                r = tp_copy();
                 TP_TO_LIST(self->obj)->val->len=0;
                 return r;
             } // if
@@ -305,7 +305,7 @@ void tp_set(tp_obj* self, tp_obj* k, tp_obj* v) {
         if (d->dtype == 2) {
            tp_obj * meta = calloc(1, sizeof(tp_obj));
            if (_tp_lookup(self,tp_string("__set__"),meta)) {
-              tp_call(meta,tp_params_v(tp,2,k,v));
+              tp_call(meta,tp_params_v(2,k,v));
               return;
            }
         }
@@ -359,14 +359,14 @@ tp_obj* tp_add(tp_obj* a, tp_obj* b) {
            char *s = TP_TO_STRING(r->obj)->val; //.info->s;
            memcpy(s,s1->val,al);
            memcpy(s+al,s2->val,bl);
-           return tp_track(tp,r);
+           return tp_track(r);
         }
         break;
       case TP_LIST:
         if (b->type == TP_LIST) {
            tp_obj* r;
            tp_params_v(1,a);
-           r = tp_copy(tp);
+           r = tp_copy();
            tp_params_v(2,r,b);
            tp_extend();
            return r;

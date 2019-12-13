@@ -279,7 +279,7 @@ tp_inline_static int _tp_max(int a, int b);
 tp_inline_static int _tp_sign(tp_num);
 tp_inline_static int _tp_min(int, int);
 tp_obj* tp_string_n(char const *,int);
-void tp_compiler(TP);
+void tp_compiler();
 
 #define tp_True tp_number(1)
 #define tp_False tp_number(0)
