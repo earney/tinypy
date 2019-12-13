@@ -21,7 +21,7 @@ void exit(int x) __naked
 
 #define DLEVEL 9
 
-tp_vm *_tp_init(void) {
+void *_tp_init(void) {
     DBGPRINT1(DLEVEL, "begin:_tp_init\n");
     //tp_vm *tp = calloc(1, sizeof(tp_vm));
     tp = calloc(1, sizeof(tp_vm));
@@ -118,16 +118,16 @@ tp_vm *_tp_init(void) {
  * memory used by it. Even when you are using only a single tinypy instance, it
  * may be good practice to call this function on shutdown.
  */
-void tp_deinit(TP) {
+void tp_deinit() {
     DBGPRINT1(9,"begin:tp_deinit\n");
     tp_list_* r = TP_TO_LIST(tp->root->obj);
     while (r->val->len) {
-        _tp_list_pop(tp,r,0,"tp_deinit");
+        _tp_list_pop(r,0,"tp_deinit");
     }
-    tp_full(tp);
-    tp_full(tp);
-    tp_delete(tp,tp->root);
-    tp_gc_deinit(tp);
+    tp_full();
+    tp_full();
+    tp_delete(tp->root);
+    tp_gc_deinit();
 #ifdef TP_SANDBOX
     tp->mem_used -= sizeof(tp_vm);
 #endif
@@ -136,7 +136,7 @@ void tp_deinit(TP) {
 }
 
 /* tp_frame_*/
-void tp_frame(TP,tp_obj* globals,tp_obj* code,tp_obj *ret_dest) {
+void tp_frame(tp_obj* globals,tp_obj* code,tp_obj *ret_dest) {
     tp_frame_ f;
     f.globals = globals;
     f.code = *code;
@@ -175,7 +175,7 @@ void _tp_raise(tp_obj* e) {
         printf("\nException: (");
         //printf("'%d'\n", e->string.type);
         //printf("'%d'\n", e->string.len);
-        tp_echo(tp,e);
+        tp_echo(e);
         printf(")\n");
         //printf("Program should exit now..");
         exit(-1);
@@ -185,29 +185,29 @@ void _tp_raise(tp_obj* e) {
 #endif
     }
     if (e->type != TP_NONE) tp->ex = e;
-    tp_grey(tp,e);
+    tp_grey(e);
     longjmp(tp->buf,1);
 }
 
-void tp_print_stack(TP) {
+void tp_print_stack() {
     printf("\n");
     for (int i=0; i<=tp->cur; i++) {
-        if (!tp->frames[i].lineno) { continue; }
+        if (!tp->frames[i].lineno) continue;
         printf("File \"");
-        tp_echo(tp,tp->frames[i].fname);
+        tp_echo(tp->frames[i].fname);
         printf("\", ");
         printf("line %d, in ",tp->frames[i].lineno);
-        tp_echo(tp,tp->frames[i].name);
+        tp_echo(tp->frames[i].name);
         printf("\n ");
-        tp_echo(tp,tp->frames[i].line);
+        tp_echo(tp->frames[i].line);
         printf("\n");
     }
     printf("\nException:\n");
-    tp_echo(tp,tp->ex); 
+    tp_echo(tp->ex);
     printf("\n");
 }
 
-void tp_handle(TP) {
+void tp_handle() {
     int i;
     for (i=tp->cur; i>=0; i--) {
         if (tp->frames[i].jmp) { break; }
@@ -219,7 +219,7 @@ void tp_handle(TP) {
         return;
     }
 #ifndef CPYTHON_MOD
-    tp_print_stack(tp);
+    tp_print_stack();
     exit(-1);
 #else
     longjmp(tp->nextexpr,1);
@@ -258,46 +258,46 @@ tp_obj* tp_call(tp_obj* self, tp_obj* params) {
           case 1:
             ;
             tp_obj * meta = calloc(1, sizeof(tp_obj));
-            if (_tp_lookup(tp,self,tp_string("__new__"),meta)) {
-                _tp_list_insert(tp,p,0,self);
-                return tp_call(tp,meta,params);
+            if (_tp_lookup(self,tp_string("__new__"),meta)) {
+                _tp_list_insert(p,0,self);
+                return tp_call(meta,params);
             }
             break;
           case 2:
             ;
             tp_obj* _meta = calloc(1, sizeof(tp_obj));
-            if (_tp_lookup(tp,self,tp_string("__call__"),_meta)) return tp_call(tp,_meta,params);
+            if (_tp_lookup(self,tp_string("__call__"),_meta)) return tp_call(_meta,params);
             break;
         }//switch
         break;
       case TP_FNC:
         if (!(TP_TO_FNC(self->obj)->ftype&1)) {
-           tp_obj* r = _tp_tcall(tp,self);
-           tp_grey(tp,r);
+           tp_obj* r = _tp_tcall(self);
+           tp_grey(r);
            return r;
         }
         tp_obj* dest = tp_None_ptr;
         tp_fnc_* f = TP_TO_FNC(self->obj);
-        tp_frame(tp,&(f->info->globals),
+        tp_frame(&(f->info->globals),
                     &(f->info->code),dest);
         if ((f->ftype&2)) {
             tp->frames[tp->cur].regs[0] = *params;
-            _tp_list_insert(tp,p,0,&(f->info->self));
+            _tp_list_insert(p,0,&(f->info->self));
         } else {
             tp->frames[tp->cur].regs[0] = *params;
         }
-        tp_run(tp,tp->cur);
+        tp_run(tp->cur);
         return dest;
     } //switch
-    tp_params_v(tp,1,self);
-    tp_print(tp);
+    tp_params_v(1,self);
+    tp_print();
     tp_raise(tp_None_ptr,tp_string("(tp_call) TypeError: object is not callable"));
 }
 
 
-void tp_return(TP, tp_obj* v) {
+void tp_return(tp_obj* v) {
     tp_obj *dest = tp->frames[tp->cur].ret_dest;
-    if (dest) { dest = v; tp_grey(tp,v); }
+    if (dest) { dest = v; tp_grey(v); }
     memset(tp->frames[tp->cur].regs,0,TP_REGS_PER_FRAME*sizeof(tp_obj));
     //fprintf(stderr,"regs:%d\n",(tp->frames[tp->cur].cregs+1));
     memset(tp->frames[tp->cur].regs-TP_REGS_EXTRA,0,
@@ -314,14 +314,14 @@ void tp_return(TP, tp_obj* v) {
        "BITXOR", "IFN", "NOT", "BITNOT",
    };*/
 
-int tp_step(TP) {
+int tp_step() {
     tp_frame_ *f = &(tp->frames[tp->cur]);
     tp_obj *regs = f->regs;
     tp_code *cur = f->cur;
     tp_code e;
     while(1) {
     #ifdef TP_SANDBOX
-    tp_bounds(tp,cur,1);
+    tp_bounds(cur,1);
     #endif
     e = *cur;
     /*
@@ -330,54 +330,54 @@ int tp_step(TP) {
     */
     switch (e.i) {
         case TP_IEOF:
-            tp_return(tp,tp_None_ptr);
+            tp_return(tp_None_ptr);
             SR(0);
             break;
-        case TP_IADD: RA = *tp_add(tp,&RB,&RC); break;
-        case TP_ISUB: RA = *tp_sub(tp,&RB,&RC); break;
-        case TP_IMUL: RA = *tp_mul(tp,&RB,&RC); break;
-        case TP_IDIV: RA = *tp_div(tp,&RB,&RC); break;
-        case TP_IPOW: RA = *tp_pow(tp,&RB,&RC); break;
-        case TP_IBITAND: RA = *tp_bitwise_and(tp,&RB,&RC); break;
-        case TP_IBITOR:  RA = *tp_bitwise_or(tp,&RB,&RC); break;
-        case TP_IBITXOR:  RA = *tp_bitwise_xor(tp,&RB,&RC); break;
-        case TP_IMOD:  RA = *tp_mod(tp,&RB,&RC); break;
-        case TP_ILSH:  RA = *tp_lshift(tp,&RB,&RC); break;
-        case TP_IRSH:  RA = *tp_rshift(tp,&RB,&RC); break;
-        case TP_ICMP: RA = *tp_number(tp_cmp(tp,&RB,&RC)); break;
-        case TP_INE: RA = *tp_number(tp_cmp(tp,&RB,&RC)!=0); break;
-        case TP_IEQ: RA = *tp_number(tp_cmp(tp,&RB,&RC)==0); break;
-        case TP_ILE: RA = *tp_number(tp_cmp(tp,&RB,&RC)<=0); break;
-        case TP_ILT: RA = *tp_number(tp_cmp(tp,&RB,&RC)<0); break;
-        case TP_IBITNOT:  RA = *tp_bitwise_not(tp,&RB); break;
-        case TP_INOT: RA = *tp_number(!tp_bool(tp,&RB)); break;
+        case TP_IADD: RA = *tp_add(&RB,&RC); break;
+        case TP_ISUB: RA = *tp_sub(&RB,&RC); break;
+        case TP_IMUL: RA = *tp_mul(&RB,&RC); break;
+        case TP_IDIV: RA = *tp_div(&RB,&RC); break;
+        case TP_IPOW: RA = *tp_pow(&RB,&RC); break;
+        case TP_IBITAND: RA = *tp_bitwise_and(&RB,&RC); break;
+        case TP_IBITOR:  RA = *tp_bitwise_or(&RB,&RC); break;
+        case TP_IBITXOR:  RA = *tp_bitwise_xor(&RB,&RC); break;
+        case TP_IMOD:  RA = *tp_mod(&RB,&RC); break;
+        case TP_ILSH:  RA = *tp_lshift(&RB,&RC); break;
+        case TP_IRSH:  RA = *tp_rshift(&RB,&RC); break;
+        case TP_ICMP: RA = *tp_number(tp_cmp(&RB,&RC)); break;
+        case TP_INE: RA = *tp_number(tp_cmp(&RB,&RC)!=0); break;
+        case TP_IEQ: RA = *tp_number(tp_cmp(&RB,&RC)==0); break;
+        case TP_ILE: RA = *tp_number(tp_cmp(&RB,&RC)<=0); break;
+        case TP_ILT: RA = *tp_number(tp_cmp(&RB,&RC)<0); break;
+        case TP_IBITNOT:  RA = *tp_bitwise_not(&RB); break;
+        case TP_INOT: RA = *tp_number(!tp_bool(&RB)); break;
         case TP_IPASS: break;
-        case TP_IIF: if (tp_bool(tp,&RA)) cur += 1; break;
-        case TP_IIFN: if (!tp_bool(tp,&RA)) cur += 1; break;
+        case TP_IIF: if (tp_bool(&RA)) cur += 1; break;
+        case TP_IIFN: if (!tp_bool(&RA)) cur += 1; break;
         case TP_IGET:
-            RA = *tp_get(tp,&RB,&RC);
+            RA = *tp_get(&RB,&RC);
             GA;
             break;
         case TP_IITER:
-            if (TP_TO_NUMBER(RC.obj)->val < TP_TO_NUMBER(tp_len(tp,&RB)->obj)->val) {
-                RA = *tp_iter(tp,&RB,&RC);
+            if (TP_TO_NUMBER(RC.obj)->val < TP_TO_NUMBER(tp_len(&RB)->obj)->val) {
+                RA = *tp_iter(&RB,&RC);
                 GA;
                 TP_TO_NUMBER(RC.obj)->val += 1;
                 #ifdef TP_SANDBOX
-                tp_bounds(tp,cur,1);
+                tp_bounds(cur,1);
                 #endif
                 cur += 1;
             }
             break;
-        case TP_IHAS: RA = *tp_has(tp,&RB,&RC); break;
-        case TP_IIGET: tp_iget(tp,&RA,&RB,&RC); break;
-        case TP_ISET: tp_set(tp,&RA,&RB,&RC); break;
-        case TP_IDEL: tp_del(tp,&RA,&RB); break;
+        case TP_IHAS: RA = *tp_has(&RB,&RC); break;
+        case TP_IIGET: tp_iget(&RA,&RB,&RC); break;
+        case TP_ISET: tp_set(&RA,&RB,&RC); break;
+        case TP_IDEL: tp_del(&RA,&RB); break;
         case TP_IMOVE: RA = RB; break;
         case TP_INUMBER:
             printf("fix me....\n");
             #ifdef TP_SANDBOX
-            tp_bounds(tp,cur,sizeof(tp_num)/4);
+            tp_bounds(cur,sizeof(tp_num)/4);
             #endif
             {
             //RA = *tp_number(++cur);
@@ -388,42 +388,42 @@ int tp_step(TP) {
         case TP_ISTRING:
             printf("\nvm:348,fix me\n");
             #ifdef TP_SANDBOX
-            tp_bounds(tp,cur,(UVBC/4)+1);
+            tp_bounds(cur,(UVBC/4)+1);
             #endif
             /* RA = tp_string_n((*(cur+1)).string.val,UVBC); */
             //int a = (*(cur+1)).string->val - f->code.string->val;
             //RA = *tp_string_sub(tp,&(f->code),a,a+UVBC),
             cur += (UVBC/4)+1;
             break;
-        case TP_IDICT: RA = *tp_dict_n(tp,VC/2,&RB); break;
-        case TP_ILIST: RA = *tp_list_n(tp,VC,&RB); break;
+        case TP_IDICT: RA = *tp_dict_n(VC/2,&RB); break;
+        case TP_ILIST: RA = *tp_list_n(VC,&RB); break;
         // fixme
         case TP_IPARAMS:
             printf("fix me.. vm.c:397\n"); 
             //RA = *tp_params_n(tp,VC,&RB); break;
-        case TP_ILEN: RA = *tp_len(tp,&RB); break;
+        case TP_ILEN: RA = *tp_len(&RB); break;
         case TP_IJUMP: cur += SVBC; continue; break;
         case TP_ISETJMP: f->jmp = SVBC?cur+SVBC:0; break;
         case TP_ICALL:
             #ifdef TP_SANDBOX
-            tp_bounds(tp,cur,1);
+            tp_bounds(cur,1);
             #endif
             f->cur = cur + 1;
-            RA = *tp_call(tp,&RB,&RC);
+            RA = *tp_call(&RB,&RC);
             GA;
             return 0;
         case TP_IGGET:
-            if (!tp_iget(tp,&RA,f->globals,&RB)) {
-                RA = *tp_get(tp,tp->builtins,&RB);
+            if (!tp_iget(&RA,f->globals,&RB)) {
+                RA = *tp_get(tp->builtins,&RB);
                 GA;
             }
             break;
-        case TP_IGSET: tp_set(tp,f->globals,&RA,&RB); break;
+        case TP_IGSET: tp_set(f->globals,&RA,&RB); break;
         case TP_IDEF:
             ;
             //RA = *tp_def(tp, (cur+1).number.val,f->globals);
             #ifdef TP_SANDBOX
-            tp_bounds(tp,cur,SVBC);
+            tp_bounds(cur,SVBC);
             #endif
             printf("\nvm:385, fix me\n");
             //int a = (*(cur+1)).string->val-f->code.string->val;
@@ -433,7 +433,7 @@ int tp_step(TP) {
             cur += SVBC; continue;
             break;
         case TP_IRETURN:
-            tp_return(tp,&RA);
+            tp_return(&RA);
             SR(0);
             break;
         case TP_IRAISE:
@@ -442,13 +442,13 @@ int tp_step(TP) {
             SR(0);
             break;
         case TP_IDEBUG:
-            tp_params_v(tp,3,tp_string("DEBUG:"),tp_number(VA),&RA);
-            tp_print(tp);
+            tp_params_v(3,tp_string("DEBUG:"),tp_number(VA),&RA);
+            tp_print();
             break;
         case TP_INONE: RA = tp_None; break;
         case TP_ILINE:
             #ifdef TP_SANDBOX
-            tp_bounds(tp,cur,VA);
+            tp_bounds(cur,VA);
             #endif
             ;
             printf("\nvm:410, fix me\n");
@@ -468,56 +468,57 @@ int tp_step(TP) {
     }// switch
 
     #ifdef TP_SANDBOX
-    tp_time_update(tp);
-    tp_mem_update(tp);
-    tp_bounds(tp,cur,1);
+    tp_time_update();
+    tp_mem_update();
+    tp_bounds(cur,1);
     #endif
     cur += 1;
     } //while(1)
     //SR(0);
 }
 
-void _tp_run(TP,int cur) {
+void _tp_run(int cur) {
     tp->jmp += 1;
-    if (setjmp(tp->buf)) tp_handle(tp);
-    while (tp->cur >= cur && tp_step(tp) != -1);
+    if (setjmp(tp->buf)) tp_handle();
+    while (tp->cur >= cur && tp_step() != -1);
     tp->jmp -= 1;
 }
 
-void tp_run(TP,int cur) {
+void tp_run(int cur) {
     jmp_buf tmp;
     memcpy(tmp,tp->buf,sizeof(jmp_buf));
-    _tp_run(tp,cur);
+    _tp_run(cur);
     memcpy(tp->buf,tmp,sizeof(jmp_buf));
 }
 
-tp_obj* tp_ez_call(TP, const char *mod, const char *fnc, tp_obj* params) {
-    tp_obj* tmp= tp_get(tp,tp->modules,tp_string(mod));
-    tmp = tp_get(tp,tmp,tp_string(fnc));
-    return tp_call(tp,tmp,params);
+tp_obj* tp_ez_call(const char *mod, const char *fnc, tp_obj* params) {
+    tp_obj* tmp= tp_get(tp->modules,tp_string(mod));
+    tmp = tp_get(tmp,tp_string(fnc));
+    return tp_call(tmp,params);
 }
 
-tp_obj* _tp_import(TP, tp_obj* fname, tp_obj* name, tp_obj* code) {
+tp_obj* _tp_import(tp_obj* fname, tp_obj* name, tp_obj* code) {
 
     if (!((fname->type != TP_NONE && _tp_str_index(fname,tp_string(".tpc"))!=-1) || 
            code->type != TP_NONE)) {
-        return tp_ez_call(tp,"py2bc","import_fname",tp_params_v(tp,2,fname,name));
+        return tp_ez_call("py2bc","import_fname",tp_params_v(2,fname,name));
     }
 
     if (code->type == TP_NONE) {
-        tp_params_v(tp,1,fname);
-        code = tp_load(tp);
+        //tp_params_v(tp,1,fname);
+        //code = tp_load();
+        tp_raise(0,tp_string("(_tp_import): Cannot load module"));
     }
 
-    tp_obj* g = tp_dict(tp);
+    tp_obj* g = tp_dict();
     DBGPRINT1(DLEVEL, "\nvm.c:470,set __name__, __code__, and __dict__\n");
-    tp_set(tp,g,tp_string("__name__"),name);
-    tp_set(tp,g,tp_string("__code__"),code);
-    tp_set(tp,g,tp_string("__dict__"),g);
-    tp_frame(tp,g,code,0);
-    tp_set(tp,tp->modules,name,g);
+    tp_set(g,tp_string("__name__"),name);
+    tp_set(g,tp_string("__code__"),code);
+    tp_set(g,tp_string("__dict__"),g);
+    tp_frame(g,code,0);
+    tp_set(tp->modules,name,g);
 
-    if (!tp->jmp) tp_run(tp,tp->cur);
+    if (!tp->jmp) tp_run(tp->cur);
 
     return g;
 }
@@ -535,35 +536,35 @@ tp_obj* _tp_import(TP, tp_obj* fname, tp_obj* name, tp_obj* code) {
  * Returns:
  * The module object.
  */
-tp_obj* tp_import(TP, const char * fname, const char * name, void *codes, int len) {
+tp_obj* tp_import(const char * fname, const char * name, void *codes, int len) {
     tp_obj* f = fname?tp_string(fname):tp_None_ptr;
     tp_obj* bc = codes?tp_string_n((const char*)codes,len):tp_None_ptr;
-    return _tp_import(tp,f,tp_string(name),bc);
+    return _tp_import(f,tp_string(name),bc);
 }
 
 
 
-tp_obj* tp_exec_(TP) {
+tp_obj* tp_exec_() {
     tp_obj* code = TP_OBJ();
     tp_obj* globals = TP_OBJ();
     tp_obj* r = tp_None_ptr;
-    tp_frame(tp,globals,code,r);
-    tp_run(tp,tp->cur);
+    tp_frame(globals,code,r);
+    tp_run(tp->cur);
     return r;
 }
 
 
-tp_obj* tp_import_(TP) {
+tp_obj* tp_import_() {
     tp_obj* mod = TP_OBJ();
 
-    if (TP_TO_NUMBER(tp_has(tp,tp->modules,mod)->obj)->val) {
-        return tp_get(tp,tp->modules,mod);
+    if (TP_TO_NUMBER(tp_has(tp->modules,mod)->obj)->val) {
+        return tp_get(tp->modules,mod);
     }
 
-    return _tp_import(tp,tp_add(tp,mod,tp_string(".tpc")),mod,tp_None_ptr);
+    return _tp_import(tp_add(mod,tp_string(".tpc")),mod,tp_None_ptr);
 }
 
-void tp_builtins(TP) {
+void tp_builtins() {
 /*
     struct {const char *s;void *f;} b[] = {
     {"print",tp_print}, {"range",tp_range}, {"min",tp_min},
@@ -593,51 +594,51 @@ void tp_builtins(TP) {
     }
 */
     //tp_obj *o; // = calloc(1, sizeof(tp_obj));
-    tp_obj *o = tp_object(tp);
+    tp_obj *o = tp_object();
     //fixme
     //error 10: 'lvalue' required for 'assignment' operation.
     //tp_set(tp,o,tp_string("__call__"),tp_fnc(tp,tp_object_call));
     //tp_set(tp,o,tp_string("__new__"),tp_fnc(tp,tp_object_new));
     DBGPRINT1(9, "adding object to builtins\n");
-    tp_set(tp,tp->builtins,tp_string("object"),o);
+    tp_set(tp->builtins,tp_string("object"),o);
     DBGPRINT1(9, "done adding object to builtins\n");
 
 }
 
 
-void tp_args(TP,int argc, char *argv[]) {
-    tp_obj* self = tp_list(tp);
+void tp_args(int argc, char *argv[]) {
+    tp_obj* self = tp_list();
     for (int i=1; i<argc; i++) {
-        _tp_list_append(tp,TP_TO_LIST(self->obj),tp_string(argv[i]));
+        _tp_list_append(TP_TO_LIST(self->obj),tp_string(argv[i]));
     }
-    tp_set(tp,tp->builtins,tp_string("ARGV"),self);
+    tp_set(tp->builtins,tp_string("ARGV"),self);
 }
 
-tp_obj* tp_main(TP,char *fname, void *code, int len) {
-    return tp_import(tp,fname,"__main__",code, len);
+tp_obj* tp_main(char *fname, void *code, int len) {
+    return tp_import(fname,"__main__",code, len);
 }
 
 /* Function: tp_compile
  * Compile some tinypy code.
  *
  */
-tp_obj* tp_compile(TP, tp_obj* text, tp_obj* fname) {
-    return tp_ez_call(tp,"BUILTINS","compile",tp_params_v(tp,2,text,fname));
+tp_obj* tp_compile(tp_obj* text, tp_obj* fname) {
+    return tp_ez_call("BUILTINS","compile",tp_params_v(2,text,fname));
 }
 
 /* Function: tp_exec
  * Execute VM code.
  */
-tp_obj* tp_exec(TP, tp_obj* code, tp_obj* globals) {
+tp_obj* tp_exec(tp_obj* code, tp_obj* globals) {
     tp_obj *r= tp_None_ptr;
-    tp_frame(tp,globals,code,r);
-    tp_run(tp,tp->cur);
+    tp_frame(globals,code,r);
+    tp_run(tp->cur);
     return r;
 }
 
-tp_obj* tp_eval(TP, const char *text, tp_obj* globals) {
-    tp_obj* code = tp_compile(tp,tp_string(text),tp_string("<eval>"));
-    return tp_exec(tp,code,globals);
+tp_obj* tp_eval(const char *text, tp_obj* globals) {
+    tp_obj* code = tp_compile(tp_string(text),tp_string("<eval>"));
+    return tp_exec(code,globals);
 }
 
 /* Function: tp_init
@@ -649,15 +650,15 @@ tp_obj* tp_eval(TP, const char *text, tp_obj* globals) {
  * Returns:
  * The newly created tinypy instance.
  */
-tp_vm *tp_init(int argc, char *argv[]) {
-    tp_vm *tp = _tp_init();
+void tp_init(int argc, char *argv[]) {
+    _tp_init(); //global variable
     DBGPRINT1(DLEVEL, "\ntp_builtins\n");
-    tp_builtins(tp);
+    tp_builtins();
     DBGPRINT1(DLEVEL, "\ntp_args\n");
     //tp_args(tp,argc,argv);
     DBGPRINT1(DLEVEL, "\ntp_compiler\n");
-    tp_compiler(tp);
-    return tp;
+    tp_compiler();
+    return;
 }
 
 /**/

@@ -5,14 +5,14 @@
 #ifndef TP_VM
 #define TP_VM
 
-tp_vm *_tp_init(void);
-void tp_deinit(TP);
-void tp_frame(TP,tp_obj* globals,tp_obj* code,tp_obj *ret_dest);
+void _tp_init(void);
+void tp_deinit();
+void tp_frame(tp_obj* globals,tp_obj* code,tp_obj *ret_dest);
 void _tp_raise(tp_obj* e);
-void tp_print_stack(TP);
-void tp_handle(TP);
-tp_obj* tp_call(TP,tp_obj* self, tp_obj* params);
-void tp_return(TP, tp_obj* v);
+void tp_print_stack();
+void tp_handle();
+tp_obj* tp_call(tp_obj* self, tp_obj* params);
+void tp_return(tp_obj* v);
 
 enum {
     TP_IEOF,TP_IADD,TP_ISUB,TP_IMUL,TP_IDIV,TP_IPOW,TP_IBITAND,TP_IBITOR,TP_ICMP,TP_IGET,TP_ISET,
@@ -32,24 +32,24 @@ enum {
 #define RC regs[e.regs.c]
 #define UVBC (unsigned short)(((VB<<8)+VC))
 #define SVBC (short)(((VB<<8)+VC))
-#define GA tp_grey(tp,&RA)
+#define GA tp_grey(&RA)
 #define SR(v) f->cur = cur; return(v);
 
-int tp_step(TP);
-void _tp_run(TP,int cur);
-void tp_run(TP,int cur);
+int tp_step();
+void _tp_run(int cur);
+void tp_run(int cur);
 
-tp_obj* tp_ez_call(TP, const char *mod, const char *fnc, tp_obj* params);
-tp_obj* _tp_import(TP, tp_obj* fname, tp_obj* name, tp_obj* code);
-tp_obj* tp_import(TP, const char * fname, const char * name, void *codes, int len);
-tp_obj* tp_exec_(TP);
-tp_obj* tp_import_(TP);
-void tp_builtins(TP);
-void tp_args(TP,int argc, char *argv[]);
-tp_obj* tp_main(TP,char *fname, void *code, int len);
-tp_obj* tp_compile(TP, tp_obj* text, tp_obj* fname);
-tp_obj* tp_exec(TP, tp_obj* code, tp_obj* globals);
-tp_obj* tp_eval(TP, const char *text, tp_obj* globals);
-tp_vm *tp_init(int argc, char *argv[]);
+tp_obj* tp_ez_call(const char *mod, const char *fnc, tp_obj* params);
+tp_obj* _tp_import(tp_obj* fname, tp_obj* name, tp_obj* code);
+tp_obj* tp_import(const char * fname, const char * name, void *codes, int len);
+tp_obj* tp_exec_();
+tp_obj* tp_import_();
+void tp_builtins();
+void tp_args(int argc, char *argv[]);
+tp_obj* tp_main(char *fname, void *code, int len);
+tp_obj* tp_compile(tp_obj* text, tp_obj* fname);
+tp_obj* tp_exec(tp_obj* code, tp_obj* globals);
+tp_obj* tp_eval(const char *text, tp_obj* globals);
+void tp_init(int argc, char *argv[]);
 
 #endif

@@ -251,7 +251,7 @@ tp_obj* tp_object_new() {
     if (d->dtype == 2) {
         tp_obj* meta=calloc(1, sizeof(tp_obj));
         if (_tp_lookup(self,tp_string("__init__"),meta)) {
-           tp_call(tp,meta,tp->params);
+           tp_call(meta,tp->params);
         }
     }
     return self;

@@ -24,8 +24,12 @@ test1:
 
 
 DEFINES = -DSDCC -DDEBUG_LEVEL=0
+<<<<<<< HEAD
 OPTIMIZE = --opt-code-size
 CFLAGS = -mz80 --verbose $(DEFINES) --std-c99 --disable-warning 126 $(OPTIMIZE)
+=======
+CFLAGS = -nogcse -mz80 --verbose $(DEFINES) --std-c99 --opt-code-size --disable-warning 126
+>>>>>>> 449ddbd57230ea1596a66c78dddfe5dc40e3ce01
 ##--stack-auto
 INC = -I/usr/sbin/share/sdcc/include -I. -I./tinypy
 CC = sdcc

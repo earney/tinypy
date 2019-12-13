@@ -13,7 +13,7 @@
 #include "tp_string.h"
 #include "vm.h"
 
-tp_obj* tp_string_t(TP, int n) {
+tp_obj* tp_string_t(int n) {
     tp_obj *r = tp_string_n(0,n);
     tp_string_* s1 = TP_TO_STRING(r->obj);
     memcpy(s1->val, 0, n); //, r->string.info->s;
@@ -25,11 +25,11 @@ tp_obj* tp_string_t(TP, int n) {
  * Create a new string which is a copy of some memory.
  * This is put into GC tracking for you.
  */
-tp_obj* tp_string_copy(TP, const char *s, int n) {
-    tp_obj* r = tp_string_t(tp,n);
+tp_obj* tp_string_copy(const char *s, int n) {
+    tp_obj* r = tp_string_t(n);
     //memcpy(r->string.info->s,s,n);
     memcpy(TP_TO_STRING(r->obj)->val,s,n);
-    return tp_track(tp,r);
+    return tp_track(r);
 }
 
 /*
@@ -37,7 +37,7 @@ tp_obj* tp_string_copy(TP, const char *s, int n) {
  * Does not need to be put into GC tracking, as its parent is
  * already being tracked (supposedly).
  */
-tp_obj* tp_string_sub(TP, tp_obj* s, int a, int b) {
+tp_obj* tp_string_sub(tp_obj* s, int a, int b) {
     int l = TP_TO_STRING(s->obj)->len;
 
     a = _tp_max(0,(a<0?l+a:a));
@@ -51,12 +51,12 @@ tp_obj* tp_string_sub(TP, tp_obj* s, int a, int b) {
     return r;
 }
 
-void _tp_string_free(TP, char * s) {
+void _tp_string_free(char * s) {
     free(s);
     s=NULL;
 }
 
-tp_obj* tp_printf(TP, char const *fmt,...) {
+tp_obj* tp_printf(char const *fmt,...) {
     int l;
     tp_obj* r;
     char *s;
@@ -71,14 +71,14 @@ tp_obj* tp_printf(TP, char const *fmt,...) {
        l = strlen(NULL) + 1;
     #endif
 
-    r = tp_string_t(tp,l);
+    r = tp_string_t(l);
     //s = r->string.info->s;
     s=TP_TO_STRING(r->obj)->val;
     va_end(arg);
     va_start(arg, fmt);
     vsprintf(s,fmt,arg);
     va_end(arg);
-    return tp_track(tp,r);
+    return tp_track(r);
 }
 
 int _tp_str_index(tp_obj* s, tp_obj* k) {
@@ -92,7 +92,7 @@ int _tp_str_index(tp_obj* s, tp_obj* k) {
     return -1;
 }
 
-tp_obj* tp_join(TP) {
+tp_obj* tp_join() {
     tp_obj* delim = TP_OBJ();
     tp_obj* val = TP_OBJ();
     int l=0,i;
@@ -104,9 +104,9 @@ tp_obj* tp_join(TP) {
 
     for (i=0; i < v->val->len; i++) {
         if (i!=0) l += d1->len;
-        l += TP_TO_STRING(tp_str(tp,&(v->val->items[i]))->obj)->len;
+        l += TP_TO_STRING(tp_str(&(v->val->items[i]))->obj)->len;
     }
-    r = tp_string_t(tp,l);
+    r = tp_string_t(l);
     //s = r->string.info->s;
     s = TP_TO_STRING(r->obj)->val;
     l = 0;
@@ -116,18 +116,19 @@ tp_obj* tp_join(TP) {
             memcpy(s+l,d1->val,d1->len);
             l += d1->len;
         }
-        e = tp_str(tp,&(v->val->items[i]));
+        e = tp_str(&(v->val->items[i]));
         tp_string_* e_str= TP_TO_STRING(e->obj);
         memcpy(s+l,e_str->val,e_str->len);
         l += e_str->len;
     }
-    return tp_track(tp,r);
+    return tp_track(r);
 }
 
-tp_obj* tp_split(TP) {
+tp_obj* tp_split() {
     tp_obj* v = TP_OBJ();
     tp_obj* d = TP_OBJ();
-    tp_obj* r = tp_list(tp);
+
+    tp_obj* r = tp_list();
 
     tp_string_* s1 = TP_TO_STRING(v->obj);
     tp_string_* s2 = TP_TO_STRING(d->obj);
@@ -135,22 +136,22 @@ tp_obj* tp_split(TP) {
 
     int i;
     while ((i=_tp_str_index(v,d))!=-1) {
-        _tp_list_append(tp,l,tp_string_sub(tp,v,0,i));
+        _tp_list_append(l,tp_string_sub(v,0,i));
         s1->val += i + s2->len;
         s1->len -= i + s2->len;
     }
-    _tp_list_append(tp,l,tp_string_sub(tp,v,0,s1->len));
+    _tp_list_append(l,tp_string_sub(v,0,s1->len));
     return r;
 }
 
 
-tp_obj* tp_find(TP) {
+tp_obj* tp_find() {
     tp_obj* s = TP_OBJ();
     tp_obj* v = TP_OBJ();
     return tp_number(_tp_str_index(s,v));
 }
 
-tp_obj* tp_str_index(TP) {
+tp_obj* tp_str_index() {
     tp_obj* s = TP_OBJ();
     tp_obj* v = TP_OBJ();
     int n = _tp_str_index(s,v);
@@ -158,19 +159,19 @@ tp_obj* tp_str_index(TP) {
     tp_raise(tp_None_ptr,tp_string("(tp_str_index) ValueError: substring not found"));
 }
 
-tp_obj* tp_str2(TP) {
+tp_obj* tp_str2() {
     tp_obj* v = TP_OBJ();
-    return tp_str(tp,v);
+    return tp_str(v);
 }
 
-tp_obj* tp_chr(TP) {
+tp_obj* tp_chr() {
     int v = TP_NUM();
     tp_raise(tp_None_ptr,tp_string("(tp_chr) not implemented"));
     return tp_string_n((char*) v, 1);
    // return tp_string_n(tp->chars[(unsigned char)v],1);
 }
 
-tp_obj* tp_ord(TP) {
+tp_obj* tp_ord() {
     tp_obj* s = TP_STR();
     tp_string_* s1 = TP_TO_STRING(s->obj);
     if (s1->len != 1) {
@@ -179,7 +180,7 @@ tp_obj* tp_ord(TP) {
     return tp_number((unsigned char)s1->val[0]);
 }
 
-tp_obj* tp_strip(TP) {
+tp_obj* tp_strip() {
     tp_obj* o = TP_TYPE(TP_STRING);
     tp_string_* s1 = TP_TO_STRING(o->obj);
     char const *v = s1->val;
@@ -201,14 +202,14 @@ tp_obj* tp_strip(TP) {
     if ((b-a) < 0) return tp_string("");
 
     tp_obj * r = calloc(1, sizeof(tp_obj));
-    r = tp_string_t(tp,b-a);
+    r = tp_string_t(b-a);
     //s = r.string.info->s;
     s = TP_TO_STRING(r->obj)->val;
     memcpy(s,v+a,b-a);
-    return tp_track(tp,r);
+    return tp_track(r);
 }
 
-tp_obj* tp_replace(TP) {
+tp_obj* tp_replace() {
     tp_obj* s = TP_OBJ();
     tp_obj* k = TP_OBJ();
     tp_obj* v = TP_OBJ();
@@ -234,7 +235,7 @@ tp_obj* tp_replace(TP) {
     }
 /*     fprintf(stderr,"ns: %d\n",n); */
     l = TP_TO_STRING(s->obj)->len + n * (TP_TO_STRING(v->obj)->len - s2->len);
-    rr = tp_string_t(tp,l);
+    rr = tp_string_t(l);
     //r = rr->string.info->s;
     r = TP_TO_STRING(rr->obj)->val;
     d = r;
@@ -252,5 +253,5 @@ tp_obj* tp_replace(TP) {
     }
     memcpy(d,z1->val, s3->val + s3->len - z1->val);
 
-    return tp_track(tp,rr);
+    return tp_track(rr);
 }
