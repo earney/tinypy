@@ -41,14 +41,16 @@ tp_obj* tp_str(TP,tp_obj* self) {
         return tp_printf(tp,"<list 0x%x>",TP_TO_LIST(self->obj)->val);
       case TP_NONE:
         return tp_string("None");
+#ifdef TP_DATA
       case TP_DATA:
         return tp_printf(tp,"<data 0x%x>",TP_TO_DATA(self->obj)->val);
+#endif
       case TP_FNC:
         return tp_printf(tp,"<fnc 0x%x>",TP_TO_FNC(self->obj)->info);
     }
 
     DBGPRINT2(9, "tp_str:self->type:'%d'\n", self->type);
-    return tp_string("<type:?>");
+    return tp_printf(tp,"<type:'%d'>", self->type);
 }
 
 /* Function: tp_bool
@@ -456,7 +458,9 @@ int tp_cmp(TP,tp_obj* a, tp_obj* b) {
             return _a->val->len - _b->val->len;
         case TP_DICT: return TP_TO_DICT(a->obj)->val - TP_TO_DICT(b->obj)->val;
         case TP_FNC: return TP_TO_FNC(a->obj)->info - TP_TO_FNC(b->obj)->info;
+#ifdef TP_DATA
         case TP_DATA: return TP_TO_DATA(a->obj)->val - TP_TO_DATA(b->obj)->val;
+#endif
     }//switch
     tp_raise(0,tp_string("(tp_cmp) TypeError: ?"));
 }

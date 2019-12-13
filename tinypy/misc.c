@@ -9,11 +9,14 @@
 tp_obj* _tp_dcall(TP,tp_obj* (*fn)(TP)) {return (*fn)(tp);}
 
 //fixme
+
 tp_obj* _tp_tcall(TP,tp_obj* fnc) {
-    if (TP_TO_FNC(fnc->obj)->ftype&2) {
-        _tp_list_insert(tp,TP_TO_LIST(tp->params),0,&(TP_TO_FNC(fnc->obj)->info->self));
+    assert(fnc->type == TP_FNC);
+    tp_fnc_ *f = TP_TO_FNC (fnc->obj);
+    if ( f->ftype&2 ) {
+        _tp_list_insert(tp,TP_TO_LIST(tp->params),0,&(f->info->self));
     }
-   return _tp_dcall(tp, TP_TO_FNC(fnc->obj)->cfnc);
+   return _tp_dcall(tp, f->cfnc);
 }
 
 tp_obj* tp_fnc_new(TP,int t, void *v, tp_obj* c, tp_obj* s, tp_obj* g) {
@@ -37,15 +40,20 @@ tp_obj* tp_def(TP,tp_obj* code, tp_obj* g) {
     return tp_fnc_new(tp,1,0,code,tp_None_ptr,g);
 }
 
+
 /* Function: tp_fnc
  * Creates a new tinypy function object.
  * 
  * This is how you can create a tinypy function object which, when called in
  * the script, calls the provided C function.
  */
+
+#ifdef TP_FNC
 tp_obj* tp_fnc(TP,tp_obj* v(TP)) {
     return tp_fnc_new(tp,0,v,tp_None_ptr,tp_None_ptr,tp_None_ptr);
 }
+
+#endif
 
 tp_obj* tp_method(TP,tp_obj* self, tp_obj* v(TP)) {
     return tp_fnc_new(tp,2,v,tp_None_ptr,self,tp_None_ptr);
@@ -81,6 +89,8 @@ tp_obj* tp_method(TP,tp_obj* self, tp_obj* v(TP)) {
  * > tp_obj my_obj = tp_data(TP, 0, my_ptr);
  * > my_obj.data.info->free = __free__;
  */
+
+#ifdef TP_DATA
 tp_obj* tp_data(TP,int magic,void *v) {
     tp_obj *r = calloc(1, sizeof(tp_obj));
     r->type = TP_DATA;
@@ -93,6 +103,7 @@ tp_obj* tp_data(TP,int magic,void *v) {
     f->magic = magic;
     return tp_track(tp,r);
 }
+#endif
 
 /* Function: tp_params
  * Initialize the tinypy parameters.

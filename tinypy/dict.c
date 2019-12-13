@@ -61,7 +61,9 @@ int tp_hash(TP,tp_obj* v) {
             }
             return r;
         case TP_FNC: return tp_lua_hash(TP_TO_FNC(v->obj)->info,sizeof(void*));
+#ifdef TP_DATA
         case TP_DATA: return tp_lua_hash(TP_TO_DATA(v->obj)->val,sizeof(void*));
+#endif
     }
     DBGPRINT1(DLEVEL, "end:tp_hash\n");
     tp_raise(0,tp_string("(tp_hash) TypeError: value unhashable"));
@@ -71,9 +73,13 @@ void _tp_dict_hash_set(TP,_tp_dict *self, int hash, tp_obj* k, tp_obj* v) {
     DBGPRINT1(9, "begin:_tp_dict_hash_set\n");
 
     int idx = hash&self->mask;
+    //printf("idx=%d\n", idx);
     for (int i=idx; i < idx+self->alloc; i++) {
         int n = i&self->mask;
+        //printf("n=%d\n", n);
+        //printf("used=%d\n", self->items[n].used);
         if (self->items[n].used > 0) continue;
+        //printf("got here.\n");
         if (self->items[n].used == 0) self->used += 1;
         tp_item * item = calloc(1, sizeof(tp_item));
         if (!item) {
@@ -93,7 +99,11 @@ void _tp_dict_hash_set(TP,_tp_dict *self, int hash, tp_obj* k, tp_obj* v) {
 
     //DBGPRINT2(9, " <-- key\n", _debugprint_obj(k));
     //DBGPRINT2(9, " <-- value\n", _debugprint_obj(v));
-    //DBGPRINT2(9, "key_type:%s\n", k->type);
+    //DBGPRINT2(0, "self->alloc:%d\n", self->alloc);
+    //DBGPRINT2(0, "key_type:%d\n", k->type);
+    //DBGPRINT2(0, "key_type:%s\n", TP_TO_STRING(k->obj)->val);
+    //DBGPRINT2(0, "key_type:%d\n", v->type);
+    //DBGPRINT2(0, "val_type:%s\n", TP_TO_DICT(v->obj)->val);
     //DBGPRINT2(9, "key:%s\n", k->string.val);
     //DBGPRINT2(9, "value:%d\n", v->string.val);
     DBGPRINT1(9, "end:_tp_dict_hash_set\n");
@@ -179,7 +189,8 @@ void _tp_dict_setx(TP,_tp_dict *self,tp_obj* k, tp_obj* v) {
         }
         */
         //this is optimized for memory, not execution speed
-        if (self->len >= self->alloc) _tp_dict_tp_realloc(tp,self, self->len+1);
+        //printf("len=%d\n", self->len);
+        if (self->len >= self->alloc) _tp_dict_tp_realloc(tp,self, self->len+2);
         _tp_dict_hash_set(tp,self,hash,k,v);
     } else {
         self->items[n].val = v;

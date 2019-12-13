@@ -80,8 +80,10 @@ tp_inline_static void tp_echo(TP,tp_obj* e) {
     //DBGASSERT(9, e->type == TP_STRING);
     //DBGPRINT1(9,"begin:tp_echo:\n");
     //DBGPRINT2(9, "%s\n", e->string.val);
-    e = tp_str(tp,e);
-    DBGPRINT2(9, "%s", TP_TO_STRING(e->obj)->val);
+    if (e->type != TP_STRING) {
+      e=tp_str(tp, e);
+    }
+    printf("%s", TP_TO_STRING(e->obj)->val);
     //DBGPRINT1(9,"end:tp_echo\n");
 }
 
@@ -101,7 +103,7 @@ tp_obj* tp_string_n(char const *v,int n) {
     tp_obj * o = calloc(1, sizeof(tp_obj));
     if (!o) {
         printf("tp_string_n:Error cannot allocate memory\n");
-        printf("'%s', size='%d'\n", v, sizeof(tp_obj));
+        printf("string='%s', size='%d'\n", v, sizeof(tp_obj));
         exit(0);
     }
     //static tp_string_ s = {TP_STRING, 0,v,n};

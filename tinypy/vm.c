@@ -140,6 +140,7 @@ void tp_frame(TP,tp_obj* globals,tp_obj* code,tp_obj *ret_dest) {
     f.globals = globals;
     f.code = *code;
     f.cur = (tp_code*)TP_TO_STRING(f.code.obj)->val;
+    printf("code='%s'\n", TP_TO_STRING(f.code.obj)->val);
     f.jmp = 0;
 /*     fprintf(stderr,"tp->cur: %d\n",tp->cur);*/
     //f.regs = (tp->cur <= 0?tp->regs:tp->frames[tp->cur].regs+tp->frames[tp->cur].cregs);
@@ -172,7 +173,6 @@ void _tp_raise(TP,tp_obj* e) {
         printf("\nException: (");
         //printf("'%d'\n", e->string.type);
         //printf("'%d'\n", e->string.len);
-        //printf("'%s'\n", e->string.val);
         tp_echo(tp,e);
         printf(")\n");
         //printf("Program should exit now..");
@@ -286,7 +286,6 @@ tp_obj* tp_call(TP,tp_obj* self, tp_obj* params) {
         }
         tp_run(tp,tp->cur);
         return dest;
-
     } //switch
     tp_params_v(tp,1,self);
     tp_print(tp);

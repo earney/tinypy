@@ -26,6 +26,7 @@ tp_obj* tp_print(TP) {
     return tp_None_ptr;
 }
 
+/*
 tp_obj* tp_bind(TP) {
     tp_obj* r = TP_TYPE(TP_FNC);
     tp_obj* self = TP_OBJ();
@@ -38,6 +39,7 @@ tp_obj* tp_bind(TP) {
                       self,
                       &(f->info->globals));
 }
+*/
 
 tp_obj* tp_min(TP) {
     tp_obj* r = TP_OBJ();
@@ -136,9 +138,9 @@ tp_obj* tp_istype(TP) {
     if (tp_cmp(tp,t,tp_string("dict")) == 0) return tp_number(v->type == TP_DICT);
     if (tp_cmp(tp,t,tp_string("number")) == 0) return tp_number(v->type == TP_NUMBER);
    
-    tp_fnc_ *vo=TP_TO_FNC(v->obj);
-    if (tp_cmp(tp,t,tp_string("fnc")) == 0) return tp_number(v->type == TP_FNC && (vo->ftype&2) == 0);
-    if (tp_cmp(tp,t,tp_string("method")) == 0) return tp_number(v->type == TP_FNC && (vo->ftype&2) != 0);
+    //tp_fnc_ *vo=TP_TO_FNC(v->obj);
+    //if (tp_cmp(tp,t,tp_string("fnc")) == 0) return tp_number(v->type == TP_FNC && (vo->ftype&2) == 0);
+    //if (tp_cmp(tp,t,tp_string("method")) == 0) return tp_number(v->type == TP_FNC && (vo->ftype&2) != 0);
     tp_raise(tp_None_ptr,tp_string("(is_type) TypeError: ?"));
 }
 
@@ -251,6 +253,7 @@ tp_obj* tp_mtime(TP) {
     tp_raise(tp_None_ptr,tp_string("(tp_mtime) IOError: ?"));
 }
 
+
 int _tp_lookup_(TP,tp_obj* self, tp_obj* k, tp_obj *meta, int depth) {
     tp_dict_* d = TP_TO_DICT(self->obj);
     int n = _tp_dict_find(tp,d->val,k);
@@ -262,8 +265,9 @@ int _tp_lookup_(TP,tp_obj* self, tp_obj* k, tp_obj *meta, int depth) {
     if (!depth) tp_raise(0,tp_string("(tp_lookup) RuntimeError: maximum lookup depth exceeded"));
     if (d->dtype && d->val->meta->type == TP_DICT &&
         _tp_lookup_(tp,d->val->meta,k,meta,depth)) {
+#ifdef TP_FNC
         if (d->dtype == 2 && meta->type == TP_FNC) {
-            tp_fnc_ *f=(tp_fnc_*)(meta->obj);
+            tp_fnc_ *f=TP_TO_FNC(meta->obj);
             meta = tp_fnc_new(tp,
                               f->ftype|2,
                               &(f->cfnc),
@@ -271,6 +275,7 @@ int _tp_lookup_(TP,tp_obj* self, tp_obj* k, tp_obj *meta, int depth) {
                               self,
                               &(f->info->globals));
         }
+#endif
         return 1;
     }
     return 0;

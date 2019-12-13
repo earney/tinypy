@@ -85,17 +85,20 @@ typedef struct tp_dict_ {
     unsigned char dtype;
 } tp_dict_;
 
+
 typedef struct tp_fnc_ {
     struct _tp_fnc *info;
     unsigned char ftype;
     void *cfnc;
 } tp_fnc_;
 
+#ifdef TP_DATA
 typedef struct tp_data_ {
     struct _tp_data *info;
     void *val;
     int magic;
 } tp_data_;
+#endif
 
 /* Type: tp_obj*
  * Tinypy's object representation.
@@ -120,18 +123,6 @@ typedef struct tp_data_ {
  * data.magic - The user-provided magic number for identifying the data type.
  */
 
-/*
-typedef union tp_type_ {
-    tp_number_ *number;
-    struct { int type; int *data; } gci;
-    tp_string_ *string;
-    tp_dict_ *dict;
-    tp_list_ *list;
-    tp_fnc_ *fnc;
-    tp_data_ *data;
-} tp_type_;
-*/
-
 typedef struct tp_gci_ {
      unsigned char type;
      int *data;
@@ -154,7 +145,7 @@ typedef struct _tp_string {
 */
 
 typedef struct _tp_list {
-    int gci;
+    unsigned char gci;
     tp_obj *items;
     unsigned char len;
     int alloc;
@@ -168,7 +159,7 @@ typedef struct tp_item {
 } tp_item;
 
 typedef struct _tp_dict {
-    int gci;
+    unsigned char gci;
     tp_item *items;
     int len;
     int alloc;
@@ -187,7 +178,7 @@ typedef struct _tp_fnc {
 
 
 typedef union tp_code {
-    unsigned char i;
+    int i;
     struct { unsigned char i,a,b,c; } regs;
     struct { char val[4]; } string;
     struct { float val; } number;

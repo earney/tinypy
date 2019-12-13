@@ -116,7 +116,7 @@ tp_obj* tp_join(TP) {
             memcpy(s+l,d1->val,d1->len);
             l += d1->len;
         }
-        e = tp_str(tp,&(TP_TO_LIST(val->obj)->val->items[i]));
+        e = tp_str(tp,&(v->val->items[i]));
         tp_string_* e_str= TP_TO_STRING(e->obj);
         memcpy(s+l,e_str->val,e_str->len);
         l += e_str->len;

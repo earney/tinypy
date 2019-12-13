@@ -50,6 +50,7 @@ void tp_follow(TP,tp_obj* v) {
         //printf("tp_grey:dict_meta\n");
         tp_grey(tp,d->val->meta);
         break;
+/*
       case TP_FNC:
         ;
         tp_fnc_* f = TP_TO_FNC(v->obj);
@@ -58,7 +59,9 @@ void tp_follow(TP,tp_obj* v) {
         tp_grey(tp,&(f->info->globals));
         tp_grey(tp,&(f->info->code));
         break;
+*/
     }
+
     DBGPRINT2(DLEVEL, "end:tp_follow,'%d'\n", v->type);
 }
 
@@ -112,6 +115,7 @@ void tp_delete(TP,tp_obj* v) {
       case TP_STRING:
         _tp_string_free(tp, TP_TO_STRING(v->obj)->val);
         break;
+/*
       case TP_DATA:
         ;
         tp_data_* d = TP_TO_DATA(v->obj);
@@ -124,6 +128,7 @@ void tp_delete(TP,tp_obj* v) {
       case TP_FNC:
         free(TP_TO_FNC(v->obj)->info);
         break;
+*/
     }
 
     free(v->obj);
