@@ -19,10 +19,10 @@ int tp_lua_hash(void const *v,int l) {
     return h;
 }
 
-void _tp_dict_free(TP, _tp_dict *self) {
+void _tp_dict_free(_tp_dict *self) {
     for (int i=0; i < self->len; i++) {
-        tp_delete(tp, self->items[i].key);
-        tp_delete(tp, self->items[i].val);
+        tp_delete(self->items[i].key);
+        tp_delete(self->items[i].val);
     }
     free(self->items);
     self->items = NULL;
@@ -39,7 +39,7 @@ void _tp_dict_reset(_tp_dict *self) {
 }
 */
 
-int tp_hash(TP,tp_obj* v) {
+int tp_hash(tp_obj* v) {
     DBGPRINT1(DLEVEL, "begin:tp_hash\n");
     DBGPRINT2(DLEVEL, "'%d'\n", v->type);
     //if (v->type == TP_STRING) DBGPRINT2(9, "key='%s'\n", v->obj->string->val);
@@ -49,14 +49,14 @@ int tp_hash(TP,tp_obj* v) {
         case TP_STRING: return tp_lua_hash(TP_TO_STRING(v->obj)->val,TP_TO_STRING(v->obj)->len);
         case TP_DICT: return tp_lua_hash(TP_TO_DICT(v->obj)->val,sizeof(void*));
         case TP_LIST: ;
-            tp_list_* lst = TP_TO_LIST(v->obj);
-            int r = lst->val->len;
+            _tp_list* lst = TP_TO_LIST(v->obj)->val;
+            int r = lst->len;
             for(int n=0; n < r; n++) {
-                 tp_obj* vv = &(lst->val->items[n]);
+                 tp_obj* vv = &(lst->items[n]);
                  if (vv->type != TP_LIST) {
-                    r+=tp_hash(tp,&(lst->val->items[n]));
+                    r+=tp_hash(&(lst->items[n]));
                  } else {
-                    r+=tp_lua_hash(lst,sizeof(void*));
+                    r+=tp_lua_hash(TP_TO_LIST(v->obj),sizeof(void*));
                  }
             }
             return r;
@@ -69,7 +69,7 @@ int tp_hash(TP,tp_obj* v) {
     tp_raise(0,tp_string("(tp_hash) TypeError: value unhashable"));
 }
 
-void _tp_dict_hash_set(TP,_tp_dict *self, int hash, tp_obj* k, tp_obj* v) {
+void _tp_dict_hash_set(_tp_dict *self, int hash, tp_obj* k, tp_obj* v) {
     DBGPRINT1(9, "begin:_tp_dict_hash_set\n");
 
     int idx = hash&self->mask;
@@ -110,7 +110,7 @@ void _tp_dict_hash_set(TP,_tp_dict *self, int hash, tp_obj* k, tp_obj* v) {
     tp_raise(,tp_string("(_tp_dict_hash_set) RuntimeError: ?"));
 }
 
-void _tp_dict_tp_realloc(TP,_tp_dict *self,int len) {
+void _tp_dict_tp_realloc(_tp_dict *self,int len) {
     DBGPRINT1(9, "begin:_tp_dict_tp_realloc\n");
     DBGPRINT2(9, "len:%d\n", len);
     tp_item *items = self->items;
@@ -133,17 +133,16 @@ void _tp_dict_tp_realloc(TP,_tp_dict *self,int len) {
 
     for (int i=0; i<alloc; i++) {
         if (items[i].used != 1) continue;
-
         //DBGPRINT2(9, "key:%s\n", _debugprint_obj(items[i].key));
         //DBGPRINT2(9, "value:%s\n", _debugprint_obj(items[i].val));
         //DBGPRINT2(9, "key value:%s\n", items[i].key->obj->string->val);
-        _tp_dict_hash_set(tp,self,items[i].hash,items[i].key,items[i].val);
+        _tp_dict_hash_set(self,items[i].hash,items[i].key,items[i].val);
     }
     free(items);
     DBGPRINT1(9, "end:_tp_dict_tp_realloc\n");
 }
 
-int _tp_dict_hash_find(TP,_tp_dict *self, int hash, tp_obj* k) {
+int _tp_dict_hash_find(_tp_dict *self, int hash, tp_obj* k) {
     DBGPRINT1(9,"begin:_tp_dict_hash_find\n");
     int idx = hash&self->mask;
 
@@ -152,19 +151,19 @@ int _tp_dict_hash_find(TP,_tp_dict *self, int hash, tp_obj* k) {
         if (self->items[n].used == 0) break;
         if (self->items[n].used < 0) continue;
         if (self->items[n].hash != hash) continue;
-        if (tp_cmp(tp,self->items[n].key,k) != 0) continue;
+        if (tp_cmp(self->items[n].key,k) != 0) continue;
         return n;
     }
     DBGPRINT1(9,"end:_tp_dict_hash_find\n");
     return -1;
 }
 
-int _tp_dict_find(TP,_tp_dict *self,tp_obj* k) {
+int _tp_dict_find(_tp_dict *self,tp_obj* k) {
     DBGPRINT1(9,"_tp_dict_find\n");
-    return _tp_dict_hash_find(tp,self,tp_hash(tp,k),k);
+    return _tp_dict_hash_find(self,tp_hash(k),k);
 }
 
-void _tp_dict_setx(TP,_tp_dict *self,tp_obj* k, tp_obj* v) {
+void _tp_dict_setx(_tp_dict *self,tp_obj* k, tp_obj* v) {
     DBGPRINT1(9, "begin:_tp_dict_setx\n");
     //DBGPRINT2(9, "self.type='%d'\n", self->type);
     //printf("\n");
@@ -172,11 +171,11 @@ void _tp_dict_setx(TP,_tp_dict *self,tp_obj* k, tp_obj* v) {
     //printf("\n");
     //DBGPRINT1(9, _debugprint_obj(v));
     //printf("\n");
-    int hash = tp_hash(tp,k);
+    int hash = tp_hash(k);
     DBGPRINT2(9, "hash='%d'\n", hash);
     DBGPRINT2(9, "len='%d'\n", self->len);
     DBGPRINT2(9, "alloc='%d'\n", self->alloc);
-    int n = _tp_dict_hash_find(tp,self,hash,k);
+    int n = _tp_dict_hash_find(self,hash,k);
     DBGPRINT2(9, "hash_find='%d'\n", n);
     if (n == -1) {
         /*
@@ -190,43 +189,43 @@ void _tp_dict_setx(TP,_tp_dict *self,tp_obj* k, tp_obj* v) {
         */
         //this is optimized for memory, not execution speed
         //printf("len=%d\n", self->len);
-        if (self->len >= self->alloc) _tp_dict_tp_realloc(tp,self, self->len+2);
-        _tp_dict_hash_set(tp,self,hash,k,v);
+        if (self->len >= self->alloc) _tp_dict_tp_realloc(self, self->len+2);
+        _tp_dict_hash_set(self,hash,k,v);
     } else {
         self->items[n].val = v;
     }
     DBGPRINT1(9, "end:_tp_dict_setx\n");
 }
 
-void _tp_dict_set(TP,_tp_dict *self,tp_obj* k, tp_obj* v) {
+void _tp_dict_set(_tp_dict *self,tp_obj* k, tp_obj* v) {
     DBGPRINT1(9, "begin:_tp_dict_set\n");
     //_debugprint_obj(k);
     //_debugprint_obj(v);
-    _tp_dict_setx(tp,self,k,v);
-    tp_grey(tp,k);
-    tp_grey(tp,v);
+    _tp_dict_setx(self,k,v);
+    tp_grey(k);
+    tp_grey(v);
     DBGPRINT1(9, "end:_tp_dict_set\n");
 }
 
-tp_obj* _tp_dict_get(TP,_tp_dict *self,tp_obj* k, const char *error) {
-    int n = _tp_dict_find(tp,self,k);
+tp_obj* _tp_dict_get(_tp_dict *self,tp_obj* k, const char *error) {
+    int n = _tp_dict_find(self,k);
     if (n < 0) {
         error="_tp_dict_get:fixme";
-        tp_raise(tp_None_ptr,tp_add(tp,tp_string("(_tp_dict_get) KeyError: "),tp_str(tp,k)));
+        tp_raise(tp_None_ptr,tp_add(tp_string("(_tp_dict_get) KeyError: "),tp_str(k)));
     }
     return self->items[n].val;
 }
 
-void _tp_dict_del(TP,_tp_dict *self,tp_obj* k, const char *error) {
-    int n = _tp_dict_find(tp,self,k);
+void _tp_dict_del(_tp_dict *self,tp_obj* k, const char *error) {
+    int n = _tp_dict_find(self,k);
     if (n < 0) {
         error="_tp_dict_del:fixme";
-        tp_raise(,tp_add(tp,tp_string("(_tp_dict_del) KeyError: "),tp_str(tp,k)));
+        tp_raise(,tp_add(tp_string("(_tp_dict_del) KeyError: "),tp_str(k)));
     }
     self->items[n].used = -1;
     //should we remove the key and value object????
-    tp_delete(tp, self->items[n].key);
-    tp_delete(tp, self->items[n].val);
+    tp_delete(self->items[n].key);
+    tp_delete(self->items[n].val);
     self->len -= 1;
 }
 
@@ -236,7 +235,7 @@ _tp_dict *_tp_dict_new(TP) {
 }
 */
 
-tp_obj* _tp_dict_copy(TP,tp_obj* rr) {
+tp_obj* _tp_dict_copy(tp_obj* rr) {
     DBGPRINT1(9, "begin:_tp_dict_copy\n");
     DBGASSERT(9, rr->type == TP_DICT);
     tp_obj *to = calloc(1, sizeof(tp_obj));
@@ -256,10 +255,10 @@ tp_obj* _tp_dict_copy(TP,tp_obj* rr) {
     d->dtype = 1;
     to->type = TP_DICT;
     DBGPRINT1(9, "end:_tp_dict_copy\n");
-    return tp_track(tp,to);
+    return tp_track(to);
 }
 
-int _tp_dict_next(TP,_tp_dict *self) {
+int _tp_dict_next(_tp_dict *self) {
     if (!self->len) {
         tp_raise(0,tp_string("(_tp_dict_next) RuntimeError"));
     }
@@ -271,7 +270,7 @@ int _tp_dict_next(TP,_tp_dict *self) {
     }
 }
 
-tp_obj* tp_merge(TP) {
+tp_obj* tp_merge() {
     tp_obj* self = TP_OBJ();
     tp_obj* v = TP_OBJ();
 
@@ -279,9 +278,8 @@ tp_obj* tp_merge(TP) {
     tp_dict_* s = TP_TO_DICT(self->obj);
 
     for (int i=0; i < d->val->len; i++) {
-        int n = _tp_dict_next(tp,d->val);
-        _tp_dict_set(tp,
-                     s->val,
+        int n = _tp_dict_next(d->val);
+        _tp_dict_set(s->val,
                      s->val->items[n].key,
                      s->val->items[n].val);
     }
@@ -298,7 +296,7 @@ tp_obj* tp_merge(TP) {
  * Returns:
  * The newly created dictionary.
  */
-tp_obj* tp_dict(TP) {
+tp_obj* tp_dict() {
     DBGPRINT1(DLEVEL, "begin:tp_dict\n");
     tp_obj *r = calloc(1, sizeof(tp_obj));
     DBGPRINT1(DLEVEL, "tp_dict:after allocation\n");
@@ -312,11 +310,11 @@ tp_obj* tp_dict(TP) {
 
     r->type = TP_DICT;
     DBGPRINT1(DLEVEL, "end:tp_dict\n");
-    return tp ? tp_track(tp,r) : r;
+    return tp ? tp_track(r) : r;
 }
 
-tp_obj* tp_dict_n(TP,int n, tp_obj* argv) {
-    tp_obj* r = tp_dict(tp);
-    for (int i=0; i<n; i++) tp_set(tp,r,&(argv[i*2]),&(argv[i*2+1]));
+tp_obj* tp_dict_n(int n, tp_obj* argv) {
+    tp_obj* r = tp_dict();
+    for (int i=0; i<n; i++) tp_set(r,&(argv[i*2]),&(argv[i*2+1]));
     return r;
 }

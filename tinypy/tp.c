@@ -38,7 +38,7 @@ tp_obj* tp_string(char const *v) {
     return tp_string_n(v,strlen(v));
 }
 
-tp_inline_static void tp_cstr(TP,tp_obj* v, char *s, int l) {
+tp_inline_static void tp_cstr(tp_obj* v, char *s, int l) {
     if (v->type != TP_STRING) {
         tp_raise(,tp_string("(tp_cstr) TypeError: value not a string"));
     }
@@ -52,7 +52,7 @@ tp_inline_static void tp_cstr(TP,tp_obj* v, char *s, int l) {
     memcpy(s,s1->val,s1->len);
 }
 
-tp_obj* tp_type(TP,int t,tp_obj* v) {
+tp_obj* tp_type(int t,tp_obj* v) {
     if (v->type != t)
        tp_raise(tp_None_ptr,tp_string("(tp_type) TypeError: unexpected type"));
     return v;
@@ -76,7 +76,7 @@ tp_obj* tp_number(tp_num v) {
     return val;
 }
 
-tp_inline_static void tp_echo(TP,tp_obj* e) {
+tp_inline_static void tp_echo(tp_obj* e) {
     //DBGASSERT(9, e->type == TP_STRING);
     //DBGPRINT1(9,"begin:tp_echo:\n");
     //DBGPRINT2(9, "%s\n", e->string.val);

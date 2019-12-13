@@ -8,7 +8,7 @@
 tp_vm *_tp_init(void);
 void tp_deinit(TP);
 void tp_frame(TP,tp_obj* globals,tp_obj* code,tp_obj *ret_dest);
-void _tp_raise(TP,tp_obj* e);
+void _tp_raise(tp_obj* e);
 void tp_print_stack(TP);
 void tp_handle(TP);
 tp_obj* tp_call(TP,tp_obj* self, tp_obj* params);

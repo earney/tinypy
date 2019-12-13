@@ -23,7 +23,8 @@ void exit(int x) __naked
 
 tp_vm *_tp_init(void) {
     DBGPRINT1(DLEVEL, "begin:_tp_init\n");
-    tp_vm *tp = calloc(1, sizeof(tp_vm));
+    //tp_vm *tp = calloc(1, sizeof(tp_vm));
+    tp = calloc(1, sizeof(tp_vm));
 #ifdef TP_SANDBOX
     //tp->time_limit = TP_NO_LIMIT;
 #endif
@@ -164,7 +165,8 @@ void tp_frame(TP,tp_obj* globals,tp_obj* code,tp_obj *ret_dest) {
     tp->frames[tp->cur] = f;
 }
 
-void _tp_raise(TP,tp_obj* e) {
+//void _tp_raise(TP,tp_obj* e) {
+void _tp_raise(tp_obj* e) {
     /*char *x = 0; x[0]=0;*/
     if (!tp || !tp->jmp) {
 #ifndef CPYTHON_MOD
@@ -241,7 +243,7 @@ void tp_handle(TP) {
  * This will look for a global function named "foo", then call it with a single
  * positional parameter containing the string "hello".
  */
-tp_obj* tp_call(TP,tp_obj* self, tp_obj* params) {
+tp_obj* tp_call(tp_obj* self, tp_obj* params) {
     /* I'm not sure we should have to do this, but
     just for giggles we will. */
     tp->params = params;
@@ -435,7 +437,8 @@ int tp_step(TP) {
             SR(0);
             break;
         case TP_IRAISE:
-            _tp_raise(tp,&RA);
+            //_tp_raise(tp,&RA);
+            _tp_raise(&RA);
             SR(0);
             break;
         case TP_IDEBUG:

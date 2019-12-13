@@ -6,20 +6,20 @@
 #include "tp_list.h"
 #include "misc.h"
 
-tp_obj* _tp_dcall(TP,tp_obj* (*fn)(TP)) {return (*fn)(tp);}
+tp_obj* _tp_dcall(tp_obj* (*fn)()) {return (*fn)();}
 
 //fixme
 
-tp_obj* _tp_tcall(TP,tp_obj* fnc) {
+tp_obj* _tp_tcall(tp_obj* fnc) {
     assert(fnc->type == TP_FNC);
     tp_fnc_ *f = TP_TO_FNC (fnc->obj);
     if ( f->ftype&2 ) {
-        _tp_list_insert(tp,TP_TO_LIST(tp->params),0,&(f->info->self));
+        _tp_list_insert(TP_TO_LIST(tp->params),0,&(f->info->self));
     }
-   return _tp_dcall(tp, f->cfnc);
+   return _tp_dcall(f->cfnc);
 }
 
-tp_obj* tp_fnc_new(TP,int t, void *v, tp_obj* c, tp_obj* s, tp_obj* g) {
+tp_obj* tp_fnc_new(int t, void *v, tp_obj* c, tp_obj* s, tp_obj* g) {
     tp_obj * r = calloc(1, sizeof(tp_obj));
     r->type = TP_FNC;
     _tp_fnc *info = calloc(1, sizeof(_tp_fnc));
@@ -33,11 +33,11 @@ tp_obj* tp_fnc_new(TP,int t, void *v, tp_obj* c, tp_obj* s, tp_obj* g) {
     f->ftype = t;
     f->info = info;
     f->cfnc = v;
-    return tp_track(tp,r);
+    return tp_track(r);
 }
 
-tp_obj* tp_def(TP,tp_obj* code, tp_obj* g) {
-    return tp_fnc_new(tp,1,0,code,tp_None_ptr,g);
+tp_obj* tp_def(tp_obj* code, tp_obj* g) {
+    return tp_fnc_new(1,0,code,tp_None_ptr,g);
 }
 
 
@@ -49,14 +49,14 @@ tp_obj* tp_def(TP,tp_obj* code, tp_obj* g) {
  */
 
 #ifdef TP_FNC
-tp_obj* tp_fnc(TP,tp_obj* v(TP)) {
-    return tp_fnc_new(tp,0,v,tp_None_ptr,tp_None_ptr,tp_None_ptr);
+tp_obj* tp_fnc(tp_obj* v()) {
+    return tp_fnc_new(0,v,tp_None_ptr,tp_None_ptr,tp_None_ptr);
 }
 
 #endif
 
-tp_obj* tp_method(TP,tp_obj* self, tp_obj* v(TP)) {
-    return tp_fnc_new(tp,2,v,tp_None_ptr,self,tp_None_ptr);
+tp_obj* tp_method(tp_obj* self, tp_obj* v()) {
+    return tp_fnc_new(2,v,tp_None_ptr,self,tp_None_ptr);
 }
 
 /* Function: tp_data
@@ -91,7 +91,7 @@ tp_obj* tp_method(TP,tp_obj* self, tp_obj* v(TP)) {
  */
 
 #ifdef TP_DATA
-tp_obj* tp_data(TP,int magic,void *v) {
+tp_obj* tp_data(int magic,void *v) {
     tp_obj *r = calloc(1, sizeof(tp_obj));
     r->type = TP_DATA;
 
@@ -101,7 +101,7 @@ tp_obj* tp_data(TP,int magic,void *v) {
     f->info = calloc(1, sizeof(_tp_data));
     f->val = v;
     f->magic = magic;
-    return tp_track(tp,r);
+    return tp_track(r);
 }
 #endif
 
@@ -112,7 +112,7 @@ tp_obj* tp_data(TP,int magic,void *v) {
  * list of parameters getting passed to it. Usually, you may want to use
  * <tp_params_n> or <tp_params_v>.
  */
-tp_obj* tp_params(TP) {
+tp_obj* tp_params() {
     tp_obj *r = calloc(1, sizeof(tp_obj));
 
     tp_list_* l = TP_TO_LIST(tp->_params->obj);
@@ -135,10 +135,10 @@ tp_obj* tp_params(TP) {
  * Returns:
  * The parameters list. You may modify it before performing the function call.
  */
-tp_obj* tp_params_n(TP,int n, tp_obj* argv[]) {
-    tp_obj* r = tp_params(tp);
+tp_obj* tp_params_n(int n, tp_obj* argv[]) {
+    tp_obj* r = tp_params();
     tp_list_* l = TP_TO_LIST(r->obj);
-    for (int i=0; i<n; i++) _tp_list_append(tp,l,argv[i]);
+    for (int i=0; i<n; i++) _tp_list_append(l,argv[i]);
     return r;
 }
 
@@ -157,13 +157,13 @@ tp_obj* tp_params_n(TP,int n, tp_obj* argv[]) {
  * A tinypy list object representing the current call parameters. You can modify
  * the list before doing the function call.
  */
-tp_obj* tp_params_v(TP,int n,...) {
-    tp_obj* r = tp_params(tp);
+tp_obj* tp_params_v(int n,...) {
+    tp_obj* r = tp_params();
     va_list* a;
     va_start(a,n);
     tp_list_* l = TP_TO_LIST(r->obj);
 
-    for (int i=0; i<n; i++) _tp_list_append(tp,l,&(va_arg(a,tp_obj)));
+    for (int i=0; i<n; i++) _tp_list_append(l,&(va_arg(a,tp_obj)));
     va_end(a);
     return r;
 }

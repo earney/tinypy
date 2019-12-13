@@ -152,7 +152,7 @@ typedef struct _tp_list {
 } _tp_list;
 
 typedef struct tp_item {
-    unsigned char used;
+    char used;
     int hash;
     tp_obj *key;
     tp_obj *val;
@@ -263,6 +263,9 @@ typedef struct tp_vm {
 } tp_vm;
 
 #define TP tp_vm *tp
+
+tp_vm *tp;
+
 typedef struct _tp_data {
     int gci;
     void (*free)(TP,tp_obj*);
@@ -270,8 +273,8 @@ typedef struct _tp_data {
 
 tp_inline_static tp_obj* tp_number(tp_num);
 tp_inline_static tp_obj* tp_string(char const *);
-tp_inline_static tp_obj* tp_type(TP,int,tp_obj*);
-tp_inline_static void tp_echo(TP,tp_obj*);
+tp_inline_static tp_obj* tp_type(int,tp_obj*);
+tp_inline_static void tp_echo(tp_obj*);
 tp_inline_static int _tp_max(int a, int b);
 tp_inline_static int _tp_sign(tp_num);
 tp_inline_static int _tp_min(int, int);
@@ -300,21 +303,21 @@ void tp_free(TP, void *);
 //void tp_time_update(TP);
 //void tp_mem_update(TP);
 
-void tp_run(TP,int cur);
+//void tp_run(int cur);
 //void tp_set(TP,tp_obj*,tp_obj*,tp_obj*);
-tp_obj* tp_get(TP,tp_obj*,tp_obj*);
-tp_obj* tp_has(TP,tp_obj* self, tp_obj* k);
-tp_obj* tp_len(TP,tp_obj*);
-void tp_del(TP,tp_obj*,tp_obj*);
-tp_obj* tp_str(TP,tp_obj*);
-int tp_bool(TP,tp_obj*);
-int tp_cmp(TP,tp_obj*,tp_obj*);
-//void _tp_raise(TP,tp_obj*);
-tp_obj* tp_printf(TP,char const *fmt,...);
-tp_obj* tp_track(TP,tp_obj*);
-void tp_grey(TP,tp_obj*);
-tp_obj* tp_call(TP, tp_obj* fnc, tp_obj* params);
-tp_obj* tp_add(TP,tp_obj* a, tp_obj* b) ;
+tp_obj* tp_get(tp_obj*,tp_obj*);
+tp_obj* tp_has(tp_obj* self, tp_obj* k);
+tp_obj* tp_len(tp_obj*);
+void tp_del(tp_obj*,tp_obj*);
+tp_obj* tp_str(tp_obj*);
+int tp_bool(tp_obj*);
+int tp_cmp(tp_obj*,tp_obj*);
+//void _tp_raise(TP,tp_obj*);0
+//tp_obj* tp_printf(char const *fmt,...);
+tp_obj* tp_track(tp_obj*);
+void tp_grey(tp_obj*);
+//tp_obj* tp_call(tp_obj* fnc, tp_obj* params);
+tp_obj* tp_add(tp_obj* a, tp_obj* b) ;
 
 /* __func__ __VA_ARGS__ __FILE__ __LINE__ */
 
@@ -340,15 +343,15 @@ tp_obj* tp_add(TP,tp_obj* a, tp_obj* b) ;
 
 #define TP_TO_GCI(d) ((tp_gci_*)(d))
 
-#define tp_raise(r,v) {_tp_raise(tp,v); return r;}
+#define tp_raise(r,v) {_tp_raise(v); return r;}
 #define TP_CSTR_LEN 256
 
-#define TP_OBJ() (tp_get(tp,tp->params,tp_None_ptr))
+#define TP_OBJ() (tp_get(tp->params,tp_None_ptr))
 #define TP_NO_LIMIT 0
-#define TP_TYPE(t) tp_type(tp,t,TP_OBJ())
+#define TP_TYPE(t) tp_type(t,TP_OBJ())
 #define TP_NUM() (TP_TO_NUMBER(TP_TYPE(TP_NUMBER)->obj)->val)
 /* #define TP_STR() (TP_CSTR(TP_TYPE(TP_STRING))) */
 #define TP_STR() (TP_TYPE(TP_STRING))
-#define TP_DEFAULT(d) (TP_TO_LIST(tp->params->obj)->val->len?tp_get(tp,tp->params,tp_None_ptr):(d))
+#define TP_DEFAULT(d) (TP_TO_LIST(tp->params->obj)->val->len?tp_get(tp->params,tp_None_ptr):(d))
 
 #endif

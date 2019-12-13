@@ -20,7 +20,7 @@
  */
 
 
-tp_obj* tp_str(TP,tp_obj* self) {
+tp_obj* tp_str(tp_obj* self) {
     //DBGPRINT1(9,"begin:tp_str\n");
     // DBGPRINT2("tp_str:self->type:'%d'\n", self->type);
     switch(self->type) {
@@ -31,26 +31,26 @@ tp_obj* tp_str(TP,tp_obj* self) {
         float f =tp_fabs(v)-tp_fabs((long)(v));
         if (f < 0.000001) {
         //if ((fabs(*v)-fabs((long)*v)) < 0.000001) {
-           return tp_printf(tp,"%ld",tp_number(v));
+           return tp_printf("%ld",tp_number(v));
         }
-        return tp_printf(tp,"%f",v);
+        return tp_printf("%f",v);
         }
       case TP_DICT:
-        return tp_printf(tp,"<dict 0x%x>",TP_TO_DICT(self->obj)->val);
+        return tp_printf("<dict 0x%x>",TP_TO_DICT(self->obj)->val);
       case TP_LIST:
-        return tp_printf(tp,"<list 0x%x>",TP_TO_LIST(self->obj)->val);
+        return tp_printf("<list 0x%x>",TP_TO_LIST(self->obj)->val);
       case TP_NONE:
         return tp_string("None");
 #ifdef TP_DATA
       case TP_DATA:
-        return tp_printf(tp,"<data 0x%x>",TP_TO_DATA(self->obj)->val);
+        return tp_printf("<data 0x%x>",TP_TO_DATA(self->obj)->val);
 #endif
       case TP_FNC:
-        return tp_printf(tp,"<fnc 0x%x>",TP_TO_FNC(self->obj)->info);
+        return tp_printf("<fnc 0x%x>",TP_TO_FNC(self->obj)->info);
     }
 
     DBGPRINT2(9, "tp_str:self->type:'%d'\n", self->type);
-    return tp_printf(tp,"<type:'%d'>", self->type);
+    return tp_printf("<type:'%d'>", self->type);
 }
 
 /* Function: tp_bool
@@ -60,7 +60,7 @@ tp_obj* tp_str(TP,tp_obj* self) {
  * type None or v is a string list or dictionary with a length of 0. Else true
  * is returned.
  */
-int tp_bool(TP,tp_obj* v) {
+int tp_bool(tp_obj* v) {
     switch(v->type) {
         case TP_NUMBER: return TP_TO_NUMBER(v->obj)->val != 0;
         case TP_NONE: return 0;
@@ -77,7 +77,7 @@ int tp_bool(TP,tp_obj* v) {
  *
  * Returns tp_True if self[k] exists, tp_False otherwise.
  */
-tp_obj* tp_has(TP,tp_obj* self, tp_obj* k) {
+tp_obj* tp_has(tp_obj* self, tp_obj* k) {
     switch(self->type) {
       case TP_DICT:
         if (_tp_dict_find(tp,TP_TO_DICT(self->obj)->val,k) != -1) return tp_True;
@@ -101,7 +101,7 @@ tp_obj* tp_has(TP,tp_obj* self, tp_obj* k) {
  */
 void tp_del(TP,tp_obj* self, tp_obj* k) {
     if (self->type == TP_DICT) {
-        _tp_dict_del(tp,TP_TO_DICT(self->obj)->val,k,"tp_del");
+        _tp_dict_del(TP_TO_DICT(self->obj)->val,k,"tp_del");
         return;
     }
     tp_raise(,tp_string("(tp_del) TypeError: object does not support item deletion"));
@@ -130,15 +130,15 @@ void tp_del(TP,tp_obj* self, tp_obj* k) {
  * Returns:
  * The first (k = 0) or next (k = 1 .. len(self)-1) item in the iteration.
  */
-tp_obj* tp_iter(TP,tp_obj* self, tp_obj* k) {
+tp_obj* tp_iter(tp_obj* self, tp_obj* k) {
     switch(self->type) {
       case TP_LIST:
       case TP_STRING:
-         return tp_get(tp,self,k);
+         return tp_get(self,k);
       case TP_DICT:
          if (k->type == TP_NUMBER) {
             tp_dict_* d = TP_TO_DICT(self->obj);
-            int n = _tp_dict_next(tp,d->val);
+            int n = _tp_dict_next(d->val);
             return d->val->items[n].key;
          }
     }
@@ -155,37 +155,37 @@ tp_obj* tp_iter(TP,tp_obj* self, tp_obj* k) {
  * As a special case, if self is a list, self[None] will return the first
  * element in the list and subsequently remove it from the list.
  */
-tp_obj* tp_get(TP,tp_obj* self, tp_obj* k) {
+tp_obj* tp_get(tp_obj* self, tp_obj* k) {
     switch(self->type) {
       case  TP_DICT:
         ;
         tp_dict_ * d = TP_TO_DICT(self->obj);
         if (d->dtype == 2) { \
            tp_obj *meta = calloc(1, sizeof(tp_obj));
-           if (_tp_lookup(tp,self,tp_string("__get__"),meta)) {
-              return tp_call(tp,meta,tp_params_v(tp,1,k));
+           if (_tp_lookup(self,tp_string("__get__"),meta)) {
+              return tp_call(meta,tp_params_v(tp,1,k));
            }
         }
         tp_obj *r=calloc(1, sizeof(tp_obj));
-        if (d->dtype && _tp_lookup(tp,self,k,r)) return r;
+        if (d->dtype && _tp_lookup(self,k,r)) return r;
         // delete r?
-        return _tp_dict_get(tp,d->val,k,"tp_get");
+        return _tp_dict_get(d->val,k,"tp_get");
       case TP_LIST:
         switch(k->type) {
           case TP_NUMBER:
             ;
-            int l = TP_TO_NUMBER(tp_len(tp,self)->obj)->val;
+            int l = TP_TO_NUMBER(tp_len(self)->obj)->val;
             int n = TP_TO_NUMBER(k->obj)->val;
             n = (n<0?l+n:n);
             return _tp_list_get(tp,TP_TO_LIST(self->obj),n,"tp_get");
           case TP_STRING:
-            if (tp_cmp(tp,tp_string("append"),k) == 0) return tp_method(tp,self,tp_append);
-            if (tp_cmp(tp,tp_string("pop"),k) == 0)  return tp_method(tp,self,tp_pop);
-            if (tp_cmp(tp,tp_string("index"),k) == 0) return tp_method(tp,self,tp_index);
-            if (tp_cmp(tp,tp_string("sort"),k) == 0) return tp_method(tp,self,tp_sort);
-            if (tp_cmp(tp,tp_string("extend"),k) == 0) return tp_method(tp,self,tp_extend);
-            if (tp_cmp(tp,tp_string("*"),k) == 0) {
-                tp_params_v(tp,1,self);
+            if (tp_cmp(tp_string("append"),k) == 0) return tp_method(self,tp_append);
+            if (tp_cmp(tp_string("pop"),k) == 0)  return tp_method(self,tp_pop);
+            if (tp_cmp(tp_string("index"),k) == 0) return tp_method(self,tp_index);
+            if (tp_cmp(tp_string("sort"),k) == 0) return tp_method(self,tp_sort);
+            if (tp_cmp(tp_string("extend"),k) == 0) return tp_method(self,tp_extend);
+            if (tp_cmp(tp_string("*"),k) == 0) {
+                tp_params_v(1,self);
                 tp_obj *r=calloc(1, sizeof(tp_obj));
                 r = tp_copy(tp);
                 TP_TO_LIST(self->obj)->val->len=0;
@@ -193,7 +193,7 @@ tp_obj* tp_get(TP,tp_obj* self, tp_obj* k) {
             } // if
             break;
           case TP_NONE:
-            return _tp_list_pop(tp,TP_TO_LIST(self->obj),0,"tp_get");
+            return _tp_list_pop(TP_TO_LIST(self->obj),0,"tp_get");
         }// switch
       case TP_STRING:
         switch(k->type) {
@@ -210,19 +210,19 @@ tp_obj* tp_get(TP,tp_obj* self, tp_obj* k) {
             }
             break;
           case TP_STRING:
-            if (tp_cmp(tp,tp_string("join"),k) == 0) return tp_method(tp,self,tp_join);
-            if (tp_cmp(tp,tp_string("split"),k) == 0) return tp_method(tp,self,tp_split);
-            if (tp_cmp(tp,tp_string("index"),k) == 0) return tp_method(tp,self,tp_str_index);
-            if (tp_cmp(tp,tp_string("strip"),k) == 0) return tp_method(tp,self,tp_strip);
-            if (tp_cmp(tp,tp_string("replace"),k) == 0) return tp_method(tp,self,tp_replace);
+            if (tp_cmp(tp_string("join"),k) == 0) return tp_method(self,tp_join);
+            if (tp_cmp(tp_string("split"),k) == 0) return tp_method(self,tp_split);
+            if (tp_cmp(tp_string("index"),k) == 0) return tp_method(self,tp_str_index);
+            if (tp_cmp(tp_string("strip"),k) == 0) return tp_method(self,tp_strip);
+            if (tp_cmp(tp_string("replace"),k) == 0) return tp_method(self,tp_replace);
             break;
         } // switch
     } //switch
 
     if (k->type == TP_LIST) {
-        int a,b,l = TP_TO_NUMBER(tp_len(tp,self)->obj)->val;
+        int a,b,l = TP_TO_NUMBER(tp_len(self)->obj)->val;
 
-        tp_obj *tmp = tp_get(tp,k,tp_number(0));
+        tp_obj *tmp = tp_get(k,tp_number(0));
 
         switch(tmp->type) {
           case TP_NUMBER:
@@ -235,7 +235,7 @@ tp_obj* tp_get(TP,tp_obj* self, tp_obj* k) {
             tp_raise(tp_None_ptr,tp_string("(tp_get) TypeError: indices must be numbers")); 
         }//switch
 
-        tmp = tp_get(tp,k,tp_number(1));
+        tmp = tp_get(k,tp_number(1));
         switch(tmp->type) {
           case TP_NUMBER:
             b = TP_TO_NUMBER(tmp->obj)->val;
@@ -250,8 +250,8 @@ tp_obj* tp_get(TP,tp_obj* self, tp_obj* k) {
         a = _tp_max(0,(a<0?l+a:a));
         b = _tp_min(l,(b<0?l+b:b));
         switch(self->type) {
-          case TP_LIST: return tp_list_n(tp,b-a,&(TP_TO_LIST(self->obj)->val->items[a]));
-          case TP_STRING: return tp_string_sub(tp,self,a,b);
+          case TP_LIST: return tp_list_n(b-a,&(TP_TO_LIST(self->obj)->val->items[a]));
+          case TP_STRING: return tp_string_sub(self,a,b);
         }
     }
 
@@ -265,22 +265,22 @@ tp_obj* tp_get(TP,tp_obj* self, tp_obj* k) {
  * failed. Otherwise, it will return true, and the object will be returned
  * over the reference parameter r.
  */
-int tp_iget(TP,tp_obj *r, tp_obj* self, tp_obj* k) {
+int tp_iget(tp_obj *r, tp_obj* self, tp_obj* k) {
     switch(self->type) {
       case TP_DICT:
         ;
         tp_dict_* d = TP_TO_DICT(self->obj);
-        int n = _tp_dict_find(tp,d->val,k);
+        int n = _tp_dict_find(d->val,k);
         if (n == -1) return 0;
         r = d->val->items[n].val;
-        tp_grey(tp,r);
+        tp_grey(r);
         return 1;
       case TP_LIST:
         if  (!TP_TO_LIST(self->obj)->val->len) return 0;
     }
 
-    r = tp_get(tp,self,k);
-    tp_grey(tp,r);
+    r = tp_get(self,k);
+    tp_grey(r);
     return 1;
 }
 
@@ -290,7 +290,7 @@ int tp_iget(TP,tp_obj *r, tp_obj* self, tp_obj* k) {
  * This is the counterpart of tp_get, it does the same as self[k] = v would do
  * in actual tinypy code.
  */
-void tp_set(TP,tp_obj* self, tp_obj* k, tp_obj* v) {
+void tp_set(tp_obj* self, tp_obj* k, tp_obj* v) {
     DBGPRINT1(9,"begin:tp_set\n");
     DBGPRINT2(9,"type:%d\n", self->type);
     //printf("\n");
@@ -304,33 +304,33 @@ void tp_set(TP,tp_obj* self, tp_obj* k, tp_obj* v) {
         tp_dict_* d = TP_TO_DICT(self->obj);
         if (d->dtype == 2) {
            tp_obj * meta = calloc(1, sizeof(tp_obj));
-           if (_tp_lookup(tp,self,tp_string("__set__"),meta)) {
-              tp_call(tp,meta,tp_params_v(tp,2,k,v));
+           if (_tp_lookup(self,tp_string("__set__"),meta)) {
+              tp_call(meta,tp_params_v(tp,2,k,v));
               return;
            }
         }
         //DBGPRINT2(9,"k.type='%d'\n", k->type);
-        _tp_dict_set(tp,d->val,k,v);
+        _tp_dict_set(d->val,k,v);
         return;
       case TP_LIST:
         switch(k->type) {
           case TP_NUMBER:
-              _tp_list_set(tp,TP_TO_LIST(self->obj),TP_TO_NUMBER(k->obj)->val,v,"tp_set");
+              _tp_list_set(TP_TO_LIST(self->obj),TP_TO_NUMBER(k->obj)->val,v,"tp_set");
               return;
           case TP_NONE:
               //assert(self->obj->list->val->len >=0);
               //assert(self->obj->list->val->alloc >=0);
               //DBGPRINT2(9, "alloc='%d'", self->obj->list->val->alloc);
-              _tp_list_append(tp,TP_TO_LIST(self->obj),v);
+              _tp_list_append(TP_TO_LIST(self->obj),v);
               //assert(self->type == TP_LIST);
               //DBGPRINT2(9, "len='%d'", self->obj->list->val->len);
               //DBGPRINT2(9, "alloc='%d'", self->obj->list->val->alloc);
               //assert(self->obj->list->val->alloc >=0);
               return;
           case TP_STRING:
-              if (tp_cmp(tp,tp_string("*"),k) == 0) {
-                  tp_params_v(tp,2,self,v);
-                  tp_extend(tp);
+              if (tp_cmp(tp_string("*"),k) == 0) {
+                  tp_params_v(2,self,v);
+                  tp_extend();
                   return;
               }
         } // switch
@@ -343,7 +343,7 @@ void tp_set(TP,tp_obj* self, tp_obj* k, tp_obj* v) {
     tp_raise(,tp_string("(tp_set) TypeError: object does not support item assignment"));
 }
 
-tp_obj* tp_add(TP,tp_obj* a, tp_obj* b) {
+tp_obj* tp_add(tp_obj* a, tp_obj* b) {
     switch(a->type) {
       case TP_NUMBER:
         if (b->type == TP_NUMBER)
@@ -355,7 +355,7 @@ tp_obj* tp_add(TP,tp_obj* a, tp_obj* b) {
            tp_string_* s1 = TP_TO_STRING(a->obj);
            tp_string_* s2 = TP_TO_STRING(b->obj);
            int al = s1->len, bl = s2->len;
-           tp_obj* r = tp_string_t(tp,al+bl);
+           tp_obj* r = tp_string_t(al+bl);
            char *s = TP_TO_STRING(r->obj)->val; //.info->s;
            memcpy(s,s1->val,al);
            memcpy(s+al,s2->val,bl);
@@ -365,10 +365,10 @@ tp_obj* tp_add(TP,tp_obj* a, tp_obj* b) {
       case TP_LIST:
         if (b->type == TP_LIST) {
            tp_obj* r;
-           tp_params_v(tp,1,a);
+           tp_params_v(1,a);
            r = tp_copy(tp);
-           tp_params_v(tp,2,r,b);
-           tp_extend(tp);
+           tp_params_v(2,r,b);
+           tp_extend();
            return r;
         }
         break;
@@ -377,7 +377,7 @@ tp_obj* tp_add(TP,tp_obj* a, tp_obj* b) {
     tp_raise(tp_None_ptr,tp_string("(tp_add) TypeError: ?"));
 }
 
-tp_obj* tp_mul(TP,tp_obj* a, tp_obj* b) {
+tp_obj* tp_mul(tp_obj* a, tp_obj* b) {
     if (a->type == TP_NUMBER && b->type == TP_NUMBER)
        return tp_number(TP_TO_NUMBER(a->obj)->val* TP_TO_NUMBER(b->obj)->val);
 
@@ -396,15 +396,15 @@ tp_obj* tp_mul(TP,tp_obj* a, tp_obj* b) {
         int al = s1->len;
         int n = s2->val;
         if(n <= 0) {
-            tp_obj* r = tp_string_t(tp,0);
-            return tp_track(tp,r);
+            tp_obj* r = tp_string_t(0);
+            return tp_track(r);
         }
 
-        tp_obj* r = tp_string_t(tp,al*n);
+        tp_obj* r = tp_string_t(al*n);
         char *s = TP_TO_STRING(r->obj)->val;
 
         for (int i=0; i<n; i++) memcpy(s+al*i,s1->val,al);
-        return tp_track(tp,r);
+        return tp_track(r);
     }
 
     tp_raise(tp_None_ptr,tp_string("(tp_mul) TypeError: ?"));
@@ -415,7 +415,7 @@ tp_obj* tp_mul(TP,tp_obj* a, tp_obj* b) {
  *
  * Returns the number of items in a list or dict, or the length of a string.
  */
-tp_obj* tp_len(TP,tp_obj* self) {
+tp_obj* tp_len(tp_obj* self) {
     switch(self->type) {
        case TP_STRING: return tp_number(TP_TO_STRING(self->obj)->len);
        case TP_DICT: return tp_number(TP_TO_DICT(self->obj)->val->len);
@@ -425,7 +425,7 @@ tp_obj* tp_len(TP,tp_obj* self) {
     tp_raise(tp_None_ptr,tp_string("(tp_len) TypeError: len() of unsized object"));
 }
 
-int tp_cmp(TP,tp_obj* a, tp_obj* b) {
+int tp_cmp(tp_obj* a, tp_obj* b) {
     if (a->type != b->type) return a->type - b->type;
     switch(a->type) {
         case TP_NONE: return 0;
@@ -451,7 +451,7 @@ int tp_cmp(TP,tp_obj* a, tp_obj* b) {
                 if (aa.type == TP_LIST && bb.type == TP_LIST) {
                    v = TP_TO_LIST(aa.obj)->val - TP_TO_LIST(bb.obj)->val;
                 } else {
-                   v = tp_cmp(tp,&aa,&bb);
+                   v = tp_cmp(&aa,&bb);
                 }
                 if (v) return v;
             }
@@ -465,70 +465,70 @@ int tp_cmp(TP,tp_obj* a, tp_obj* b) {
     tp_raise(0,tp_string("(tp_cmp) TypeError: ?"));
 }
 
-tp_obj* tp_bitwise_and(TP,tp_obj* a,tp_obj* b) {
+tp_obj* tp_bitwise_and(tp_obj* a,tp_obj* b) {
     if (a->type == TP_NUMBER && b->type == TP_NUMBER) {
         return tp_number((long)TP_TO_NUMBER(a->obj)->val & (long)TP_TO_NUMBER(b->obj)->val);
     }
     tp_raise(tp_None_ptr,tp_string("(tp_bitwise_and) TypeError: unsupported operand type(s)"));
 }
 
-tp_obj* tp_bitwise_or(TP,tp_obj* a,tp_obj* b) {
+tp_obj* tp_bitwise_or(tp_obj* a,tp_obj* b) {
     if (a->type == TP_NUMBER && b->type == TP_NUMBER) {
         return tp_number((long) TP_TO_NUMBER(a->obj)->val | (long) TP_TO_NUMBER(b->obj)->val);
     }
     tp_raise(tp_None_ptr,tp_string("(tp_bitwise_or) TypeError: unsupported operand type(s)"));
 }
 
-tp_obj* tp_bitwise_xor(TP,tp_obj* a,tp_obj* b) {
+tp_obj* tp_bitwise_xor(tp_obj* a,tp_obj* b) {
     if (a->type == TP_NUMBER && b->type == TP_NUMBER) {
         return tp_number((long)TP_TO_NUMBER(a->obj)->val ^ (long)TP_TO_NUMBER(b->obj)->val);
     }
     tp_raise(tp_None_ptr,tp_string("(tp_bitwise_xor) TypeError: unsupported operand type(s)"));
 }
 
-tp_obj* tp_mod(TP,tp_obj* a,tp_obj* b) {
+tp_obj* tp_mod(tp_obj* a,tp_obj* b) {
     if (a->type == TP_NUMBER && b->type == TP_NUMBER) {
         return tp_number((long)TP_TO_NUMBER(a->obj)->val % (long)TP_TO_NUMBER(b->obj)->val);
     }
     tp_raise(tp_None_ptr,tp_string("(tp_mod) TypeError: unsupported operand type(s)"));
 }
 
-tp_obj* tp_lshift(TP,tp_obj* a,tp_obj* b) {
+tp_obj* tp_lshift(tp_obj* a,tp_obj* b) {
     if (a->type == TP_NUMBER && b->type == TP_NUMBER) {
         return tp_number((long)TP_TO_NUMBER(a->obj)->val << (int)TP_TO_NUMBER(b->obj)->val);
     }
     tp_raise(tp_None_ptr,tp_string("(tp_lshift) TypeError: unsupported operand type(s)"));
 }
 
-tp_obj* tp_rshift(TP,tp_obj* a,tp_obj* b) {
+tp_obj* tp_rshift(tp_obj* a,tp_obj* b) {
     if (a->type == TP_NUMBER && b->type == TP_NUMBER) {
         return tp_number((int)TP_TO_NUMBER(a->obj)->val >> (int) TP_TO_NUMBER(b->obj)->val);
     }
     tp_raise(tp_None_ptr,tp_string("(tp_rshift) TypeError: unsupported operand type(s)"));
 }
 
-tp_obj* tp_sub(TP,tp_obj* a,tp_obj* b) {
+tp_obj* tp_sub(tp_obj* a,tp_obj* b) {
     if (a->type == TP_NUMBER && b->type == TP_NUMBER) {
         return tp_number((long)TP_TO_NUMBER(a->obj)->val - (long)TP_TO_NUMBER(b->obj)->val);
     }
     tp_raise(tp_None_ptr,tp_string("(tp_sub) TypeError: unsupported operand type(s)"));
 }
 
-tp_obj* tp_div(TP,tp_obj* a,tp_obj* b) {
+tp_obj* tp_div(tp_obj* a,tp_obj* b) {
     if (a->type == TP_NUMBER && b->type == TP_NUMBER) {
         return tp_number((long)TP_TO_NUMBER(a->obj)->val / (long)TP_TO_NUMBER(b->obj)->val);
     }
     tp_raise(tp_None_ptr,tp_string("(tp_sub) TypeError: unsupported operand type(s)"));
 }
 
-tp_obj* tp_pow(TP,tp_obj* a,tp_obj* b) {
+tp_obj* tp_pow(tp_obj* a,tp_obj* b) {
     if (a->type == TP_NUMBER && b->type == TP_NUMBER) {
         return tp_number(powf(TP_TO_NUMBER(a->obj)->val,TP_TO_NUMBER(b->obj)->val));
     }
     tp_raise(tp_None_ptr,tp_string("(tp_sub) TypeError: unsupported operand type(s)"));
 }
 
-tp_obj* tp_bitwise_not(TP, tp_obj* a) {
+tp_obj* tp_bitwise_not(tp_obj* a) {
     if (a->type == TP_NUMBER) return tp_number(~(long)TP_TO_NUMBER(a->obj)->val);
     tp_raise(tp_None_ptr,tp_string("(tp_bitwise_not) TypeError: unsupported operand type"));
 }

@@ -5,16 +5,16 @@
 #include "tp_list.h"
 #include "dict.h"
 
-void tp_grey(TP,tp_obj* v);
-void tp_follow(TP,tp_obj* v);
-void tp_reset(TP);
-void tp_gc_init(TP);
-void tp_gc_deinit(TP);
-void tp_delete(TP,tp_obj* v);
-void tp_collect(TP);
-void _tp_gcinc(TP);
-void tp_full(TP);
-void tp_gcinc(TP);
-tp_obj* tp_track(TP,tp_obj* v);
+void tp_grey(tp_obj* v);
+void tp_follow(tp_obj* v);
+void tp_reset();
+void tp_gc_init();
+void tp_gc_deinit();
+void tp_delete(tp_obj* v);
+void tp_collect();
+void _tp_gcinc();
+void tp_full();
+void tp_gcinc();
+tp_obj* tp_track(tp_obj* v);
 
 #endif // GC_H

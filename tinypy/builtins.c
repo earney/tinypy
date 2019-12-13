@@ -10,16 +10,16 @@
 #include "tp_string.h"
 #include "vm.h"
 
-tp_obj* tp_print(TP) {
+tp_obj* tp_print() {
     unsigned char n = 0;
     tp_obj* e;
 
     tp_list_* lst=TP_TO_LIST(tp->params->obj);
     int l = lst->val->len;
     for (unsigned char i=0; i<l; i++) {
-        e = _tp_list_get(tp,lst,i,"TP_LOOP");
+        e = _tp_list_get(lst,i,"TP_LOOP");
         if (n) printf(" ");
-        tp_echo(tp,e);
+        tp_echo(e);
         n += 1;
     }
     printf("\n");
@@ -41,57 +41,57 @@ tp_obj* tp_bind(TP) {
 }
 */
 
-tp_obj* tp_min(TP) {
+tp_obj* tp_min() {
     tp_obj* r = TP_OBJ();
     tp_obj* e;
 
     tp_list_* lst = TP_TO_LIST(tp->params->obj);
     int l = lst->val->len;
     for (int i=0; i<l; i++) {
-      e = _tp_list_get(tp,lst,i,"TP_LOOP");
-      if (tp_cmp(tp,r,e) > 0) r = e;
+      e = _tp_list_get(lst,i,"TP_LOOP");
+      if (tp_cmp(r,e) > 0) r = e;
     }
     return r;
 }
 
-tp_obj* tp_max(TP) {
+tp_obj* tp_max() {
     tp_obj* r = TP_OBJ();
     tp_obj* e;
 
     int l = TP_TO_LIST(tp->params->obj)->val->len;
     for (int i=0; i<l; i++) {
-      e = _tp_list_get(tp,TP_TO_LIST(tp->params->obj),i,"TP_LOOP");
-      if (tp_cmp(tp,r,e) < 0) r = e;
+      e = _tp_list_get(TP_TO_LIST(tp->params->obj),i,"TP_LOOP");
+      if (tp_cmp(r,e) < 0) r = e;
     }
     return r;
 }
 
-tp_obj* tp_copy(TP) {
+tp_obj* tp_copy() {
     tp_obj* r = TP_OBJ();
     switch(r->type) {
       case TP_LIST:
-        return _tp_list_copy(tp,r);
+        return _tp_list_copy(r);
       case TP_DICT:
-        return _tp_dict_copy(tp,r);
+        return _tp_dict_copy(r);
     }
     tp_raise(tp_None_ptr,tp_string("(tp_copy) TypeError: ?"));
 }
 
 
-tp_obj* tp_len_(TP) {
+tp_obj* tp_len_() {
     tp_obj* e = TP_OBJ();
-    return tp_len(tp,e);
+    return tp_len(e);
 }
 
-tp_obj* tp_assert(TP) {
+tp_obj* tp_assert() {
     int a = TP_NUM();
     if (a) return tp_None_ptr;
     tp_raise(tp_None_ptr,tp_string("(tp_assert) AssertionError"));
 }
 
-tp_obj* tp_range(TP) {
+tp_obj* tp_range() {
     int a,b,c;
-    tp_obj* r = tp_list(tp);
+    tp_obj* r = tp_list();
     switch (TP_TO_LIST(tp->params->obj)->val->len) {
         case 1:
            a = 0;
@@ -109,34 +109,19 @@ tp_obj* tp_range(TP) {
     }
     if (c != 0) {
         for (int i=a; (c>0) ? i<b : i>b; i+=c) {
-            _tp_list_append(tp,(tp_list_*) r->obj,tp_number(i));
+            _tp_list_append(TP_TO_LIST(r->obj),tp_number(i));
         }
     }
     return r;
 }
 
-/* Function: tp_system
- *
- * The system builtin. A grave security flaw. If your version of tinypy
- * enables this, you better remove it before deploying your app :P
- */
-tp_obj* tp_system(TP) {
-/*
-    char s[TP_CSTR_LEN]; tp_cstr(tp,TP_STR(),s,TP_CSTR_LEN);
-    int r = system(s);
-    return tp_number(r);
-*/
-
-    tp_raise(tp_None_ptr,tp_string("(system) is not supported: ?"));
-}
-
-tp_obj* tp_istype(TP) {
+tp_obj* tp_istype() {
     tp_obj* v = TP_OBJ();
     tp_obj* t = TP_STR();
-    if (tp_cmp(tp,t,tp_string("string")) == 0) return tp_number(v->type == TP_STRING);
-    if (tp_cmp(tp,t,tp_string("list")) == 0) return tp_number(v->type == TP_LIST);
-    if (tp_cmp(tp,t,tp_string("dict")) == 0) return tp_number(v->type == TP_DICT);
-    if (tp_cmp(tp,t,tp_string("number")) == 0) return tp_number(v->type == TP_NUMBER);
+    if (tp_cmp(t,tp_string("string")) == 0) return tp_number(v->type == TP_STRING);
+    if (tp_cmp(t,tp_string("list")) == 0) return tp_number(v->type == TP_LIST);
+    if (tp_cmp(t,tp_string("dict")) == 0) return tp_number(v->type == TP_DICT);
+    if (tp_cmp(t,tp_string("number")) == 0) return tp_number(v->type == TP_NUMBER);
    
     //tp_fnc_ *vo=TP_TO_FNC(v->obj);
     //if (tp_cmp(tp,t,tp_string("fnc")) == 0) return tp_number(v->type == TP_FNC && (vo->ftype&2) == 0);
@@ -145,7 +130,7 @@ tp_obj* tp_istype(TP) {
 }
 
 
-tp_obj* tp_float(TP) {
+tp_obj* tp_float() {
     tp_obj* v = TP_OBJ();
 
     switch(v->type) {
@@ -166,66 +151,10 @@ tp_obj* tp_float(TP) {
     tp_raise(tp_None_ptr,tp_string("(tp_float) TypeError: ?"));
 }
 
-
-tp_obj* tp_save(TP) {
-    tp;
-    tp_raise(tp_None_ptr,tp_string("(tp_save) IOError: ?"));
-    /*
-    char fname[256]; 
-    tp_cstr(tp,TP_STR(),fname,256);
-
-    tp_obj* v = TP_OBJ();
-    FILE *f;
-    f = fopen(fname,"wb");
-    if (!f) { tp_raise(tp_None,tp_string("(tp_save) IOError: ?")); }
-    fwrite(v.string.val,v.string.len,1,f);
-    fclose(f);
-    */
-    return tp_None_ptr;
-}
-
-tp_obj* tp_load(TP) {
-    tp;
-    tp_raise(tp_None_ptr,tp_string("(tp_load) IOError: ?"));
-
-    /*
-    FILE *f;
-    long l;
-    tp_obj* r;
-    char *s;
-    char fname[256];
-    tp_cstr(tp,TP_STR(),fname,256);
-    struct stat stbuf;
-    stat(fname, &stbuf);
-    l = stbuf.st_size;
-    f = fopen(fname,"rb");
-    if (!f) {
-        tp_raise(tp_None,tp_string("(tp_load) IOError: ?"));
-    }
-    r = tp_string_t(tp,l);
-    s = r.string.info->s;
-    fread(s,1,l,f);
-    fclose(f);
-    return tp_track(tp,r);
-    */
-    return tp_None_ptr;
-}
-
-tp_obj* tp_fpack(TP) {
-/*
-    tp_num v = TP_NUM();
-    tp_obj* r = tp_string_t(tp,sizeof(tp_num));
-    //fixme
-    r->string.val = v;
-    return tp_track(tp,r);
-*/
-    tp_raise(tp_None_ptr,tp_string("(fpack) is not supported"));
-}
-
 tp_num tp_fabs(tp_num v) {return v > 0?v:-v;}
-tp_obj* tp_abs(TP) {return tp_number(tp_fabs((TP_TO_NUMBER(tp_float(tp)->obj))->val));}
-tp_obj* tp_int(TP) {return tp_number((long)(TP_TO_NUMBER(tp_float(tp)->obj))->val);}
-tp_obj* tp_round(TP) {return tp_number(_roundf((TP_TO_NUMBER(tp_float(tp)->obj))->val));}
+tp_obj* tp_abs() {return tp_number(tp_fabs((TP_TO_NUMBER(tp_float()->obj))->val));}
+tp_obj* tp_int() {return tp_number((long)(TP_TO_NUMBER(tp_float()->obj))->val);}
+tp_obj* tp_round() {return tp_number(_roundf((TP_TO_NUMBER(tp_float()->obj))->val));}
 
 tp_num _roundf(tp_num v) {
     tp_num av = tp_fabs(v);
@@ -234,29 +163,9 @@ tp_num _roundf(tp_num v) {
     return (v<0?-av:av);
 }
 
-tp_obj* tp_exists(TP) {
-/*
-    char fname[TP_CSTR_LEN];
-    tp_cstr(tp,TP_STR(),fname,TP_CSTR_LEN);
-    struct stat stbuf;
-    return tp_number(!stat(fname,&stbuf));
-*/
-    tp_raise(tp_None_ptr,tp_string("(tp_exists) IOError: ?"));
-}
-
-tp_obj* tp_mtime(TP) {
-/*
-    char fname[TP_CSTR_LEN]; tp_cstr(tp,TP_STR(),fname,TP_CSTR_LEN);
-    struct stat stbuf;
-    if (!stat(fname,&stbuf)) { return tp_number(stbuf.st_mtime); }
-*/
-    tp_raise(tp_None_ptr,tp_string("(tp_mtime) IOError: ?"));
-}
-
-
-int _tp_lookup_(TP,tp_obj* self, tp_obj* k, tp_obj *meta, int depth) {
+int _tp_lookup_(tp_obj* self, tp_obj* k, tp_obj *meta, int depth) {
     tp_dict_* d = TP_TO_DICT(self->obj);
-    int n = _tp_dict_find(tp,d->val,k);
+    int n = _tp_dict_find(d->val,k);
     if (n != -1) {
         meta = d->val->items[n].val;
         return 1;
@@ -264,25 +173,22 @@ int _tp_lookup_(TP,tp_obj* self, tp_obj* k, tp_obj *meta, int depth) {
     depth--;
     if (!depth) tp_raise(0,tp_string("(tp_lookup) RuntimeError: maximum lookup depth exceeded"));
     if (d->dtype && d->val->meta->type == TP_DICT &&
-        _tp_lookup_(tp,d->val->meta,k,meta,depth)) {
-#ifdef TP_FNC
+        _tp_lookup_(d->val->meta,k,meta,depth)) {
         if (d->dtype == 2 && meta->type == TP_FNC) {
             tp_fnc_ *f=TP_TO_FNC(meta->obj);
-            meta = tp_fnc_new(tp,
-                              f->ftype|2,
+            meta = tp_fnc_new(f->ftype|2,
                               &(f->cfnc),
                               &(f->info->code),
                               self,
                               &(f->info->globals));
         }
-#endif
         return 1;
     }
     return 0;
 }
 
-int _tp_lookup(TP,tp_obj* self, tp_obj* k, tp_obj *meta) {
-    return _tp_lookup_(tp,self,k,meta,8);
+int _tp_lookup(tp_obj* self, tp_obj* k, tp_obj *meta) {
+    return _tp_lookup_(self,k,meta,8);
 }
 
 
@@ -308,14 +214,14 @@ int _tp_lookup(TP,tp_obj* self, tp_obj* k, tp_obj *meta) {
  * Returns:
  * None
  */
-tp_obj* tp_setmeta(TP) {
+tp_obj* tp_setmeta() {
     tp_obj* self = TP_TYPE(TP_DICT);
     tp_obj* meta = TP_TYPE(TP_DICT);
     TP_TO_DICT(self->obj)->val->meta = meta;
     return tp_None_ptr;
 }
 
-tp_obj* tp_getmeta(TP) {
+tp_obj* tp_getmeta() {
     tp_obj* self = TP_TYPE(TP_DICT);
     return TP_TO_DICT(self->obj)->val->meta;
 }
@@ -327,38 +233,38 @@ tp_obj* tp_getmeta(TP) {
  * The newly created object. The object initially has no parent class, use
  * <tp_setmeta> to set a class. Also see <tp_object_new>.
  */
-tp_obj* tp_object(TP) {
+tp_obj* tp_object() {
     DBGPRINT1(9, "begin:tp_object\n");
-    tp_obj* self = tp_dict(tp);
+    tp_obj* self = tp_dict();
     TP_TO_DICT(self->obj)->dtype = 2;
     DBGPRINT1(9, "end:tp_object\n");
     return self;
 }
 
-tp_obj* tp_object_new(TP) {
+tp_obj* tp_object_new() {
     tp_obj* klass = TP_TYPE(TP_DICT);
-    tp_obj* self = tp_object(tp);
+    tp_obj* self = tp_object();
 
     tp_dict_* d=TP_TO_DICT(self->obj);
 
     d->val->meta = klass;
     if (d->dtype == 2) {
         tp_obj* meta=calloc(1, sizeof(tp_obj));
-        if (_tp_lookup(tp,self,tp_string("__init__"),meta)) {
+        if (_tp_lookup(self,tp_string("__init__"),meta)) {
            tp_call(tp,meta,tp->params);
         }
     }
     return self;
 }
 
-tp_obj* tp_object_call(TP) {
+tp_obj* tp_object_call() {
     tp_obj* self;
 
     if (TP_TO_LIST(tp->params->obj)->val->len) {
         self = TP_TYPE(TP_DICT);
         TP_TO_DICT(self->obj)->dtype = 2;
     } else {
-        self = tp_object(tp);
+        self = tp_object();
     }
     return self;
 }
@@ -371,7 +277,7 @@ tp_obj* tp_object_call(TP) {
  * functions, as it allows you to directly access the attributes stored in the
  * dict.
  */
-tp_obj* tp_getraw(TP) {
+tp_obj* tp_getraw() {
     tp_obj* self = TP_TYPE(TP_DICT);
     TP_TO_DICT(self->obj)->dtype = 0;
     return self;
@@ -386,16 +292,16 @@ tp_obj* tp_getraw(TP) {
  * Returns:
  * A new, empty class (derived from tinypy's builtin "object" class).
  */
-tp_obj* tp_class(TP) {
-    tp_obj* klass = tp_dict(tp);
-    TP_TO_DICT(klass->obj)->val->meta = tp_get(tp,tp->builtins,tp_string("object"));
+tp_obj* tp_class() {
+    tp_obj* klass = tp_dict();
+    TP_TO_DICT(klass->obj)->val->meta = tp_get(tp->builtins,tp_string("object"));
     return klass;
 }
 
 /* Function: tp_builtins_bool
  * Coerces any value to a boolean.
  */
-tp_obj* tp_builtins_bool(TP) {
+tp_obj* tp_builtins_bool() {
     tp_obj* v = TP_OBJ();
-    return tp_number(tp_bool(tp, v));
+    return tp_number(tp_bool(v));
 }
