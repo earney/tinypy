@@ -156,8 +156,9 @@ tp_obj* tp_iter(tp_obj* self, tp_obj* k) {
  * element in the list and subsequently remove it from the list.
  */
 tp_obj* tp_get(tp_obj* self, tp_obj* k) {
+    DBGPRINT2(0, "tp_get:self->type='%d'\n", self->type);
     switch(self->type) {
-      case  TP_DICT:
+      case TP_DICT:
         ;
         tp_dict_ * d = TP_TO_DICT(self->obj);
         if (d->dtype == 2) { \
@@ -300,7 +301,7 @@ void tp_set(tp_obj* self, tp_obj* k, tp_obj* v) {
     //printf("\n");
     switch(self->type) {
       case TP_DICT:
-        DBGPRINT1(8,"is a TP_DICT\n");
+        DBGPRINT1(0,"is a TP_DICT\n");
         tp_dict_* d = TP_TO_DICT(self->obj);
         if (d->dtype == 2) {
            tp_obj * meta = calloc(1, sizeof(tp_obj));
@@ -309,7 +310,7 @@ void tp_set(tp_obj* self, tp_obj* k, tp_obj* v) {
               return;
            }
         }
-        //DBGPRINT2(9,"k.type='%d'\n", k->type);
+        DBGPRINT2(0,"k.type='%d'\n", k->type);
         _tp_dict_set(d->val,k,v);
         return;
       case TP_LIST:
@@ -335,7 +336,7 @@ void tp_set(tp_obj* self, tp_obj* k, tp_obj* v) {
               }
         } // switch
     }// switch
-    DBGPRINT2(9, "self type:'%d'\n", self->type);
+    DBGPRINT2(0, "self type:'%d'\n", self->type);
     //if (self->type == 1) printf("%f\n", self->obj->number->val);
     DBGPRINT2(9, "k type:'%d'\n", k->type);
     DBGPRINT2(9, "v type:'%d'\n", v->type);

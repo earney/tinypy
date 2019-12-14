@@ -234,7 +234,7 @@ tp_obj* tp_replace() {
         s1->len -= i + s2->len;
     }
 /*     fprintf(stderr,"ns: %d\n",n); */
-    l = TP_TO_STRING(s->obj)->len + n * (TP_TO_STRING(v->obj)->len - s2->len);
+    l = s3->len + n * (v1->len - s2->len);
     rr = tp_string_t(l);
     //r = rr->string.info->s;
     r = TP_TO_STRING(rr->obj)->val;

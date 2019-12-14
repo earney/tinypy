@@ -21,10 +21,11 @@ void exit(int x) __naked
 
 #define DLEVEL 9
 
-void *_tp_init(void) {
-    DBGPRINT1(DLEVEL, "begin:_tp_init\n");
+void _tp_init(void) {
+    DBGPRINT1(0, "begin:_tp_init\n");
     //tp_vm *tp = calloc(1, sizeof(tp_vm));
     tp = calloc(1, sizeof(tp_vm));
+    DBGPRINT1(DLEVEL, "after calloc\n");
 #ifdef TP_SANDBOX
     //tp->time_limit = TP_NO_LIMIT;
 #endif
@@ -39,30 +40,29 @@ void *_tp_init(void) {
     tp->cur = 0;
     tp->jmp = 0;
     tp->ex = tp_None_ptr;
-    tp->root = tp_list_nt(tp);
+    tp->root = tp_list_nt();
     DBGPRINT1(DLEVEL,"in:_tp_init\n");
     //for (int i=0; i<256; i++) tp->chars[i][0]=i;
-    DBGPRINT1(DLEVEL,"after tp_init chars init\n");
-    tp_gc_init(tp);
+    tp_gc_init();
     DBGPRINT1(DLEVEL,"after tp_gc_init\n");
-    tp->_regs = tp_list_nt(tp);
+    tp->_regs = tp_list_nt();
     DBGASSERT(DLEVEL, tp->_regs->type == TP_LIST);
     //DBGPRINT2(9, "%d\n", tp->_regs.type);
     //DBGPRINT1(9, "in2:_tp_init\n");
-    DBGASSERT(9, TP_REGS < 255);  // need to change from unsigned char to int if > 256
+    DBGASSERT(DLEVEL, TP_REGS < 255);  // need to change from unsigned char to int if > 256
     for (unsigned char i=0; i<TP_REGS; i++) {
          DBGPRINT2(DLEVEL,"TP_REGS[%d]\n", i);
          DBGPRINT2(DLEVEL,"list type=%d\n", tp->_regs->type);
          DBGASSERT(DLEVEL, tp->_regs->type == TP_LIST);
          //printf("len = %d\n", tp->_regs->obj->list->val->len);
          //printf("alloc = %d\n", tp->_regs->obj->list->val->alloc);
-         tp_set(tp,tp->_regs,tp_None_ptr,tp_None_ptr);
+         tp_set(tp->_regs,tp_None_ptr,tp_None_ptr);
     }
     DBGPRINT1(DLEVEL,"\ntp->builtins\n");
-    tp->builtins = tp_dict(tp);
+    tp->builtins = tp_dict();
     DBGASSERT(DLEVEL, tp->builtins->type == TP_DICT);
     DBGPRINT1(DLEVEL,"\ntp->modules\n");
-    tp->modules = tp_dict(tp);
+    tp->modules = tp_dict();
     DBGASSERT(DLEVEL, tp->modules->type == TP_DICT);
     DBGPRINT1(DLEVEL,"\ntp->params\n");
     //tp->_params = tp_list(tp);
@@ -89,25 +89,25 @@ void *_tp_init(void) {
     */
 
     DBGPRINT1(DLEVEL,"sys=tp_dict\n");
-    tp_obj* sys = tp_dict(tp);
-    DBGASSERT(9, sys->type==TP_DICT);
+    tp_obj* sys = tp_dict();
+    DBGASSERT(DLEVEL, sys->type==TP_DICT);
     DBGPRINT1(DLEVEL, "set sys.version\n");
     tp_obj * version = tp_string("version");
-    DBGPRINT1(DLEVEL, version->type == TP_STRING);
+    DBGASSERT(DLEVEL, version->type == TP_STRING);
     //assert(strcmp(version->obj->string->val, "version") == 0);
     tp_obj * tiny = tp_string("tinypy 0.1");
+    DBGPRINT1(0, "set tinypy 0.1\n");
     //assert(strcmp(tiny->obj->string->val, "tinypy 0.1") == 0);
     //printf("version:'%s'\n", version->obj->string->val);
     //printf("tiny:'%s'\n", tiny->obj->string->val);
     DBGPRINT1(DLEVEL, tiny->type == TP_STRING);
-    tp_set(tp, sys, version, tiny);
+    tp_set(sys, version, tiny);
     DBGPRINT1(DLEVEL, "set sys in modules\n");
-    tp_set(tp,tp->modules, tp_string("sys"), sys);
+    tp_set(tp->modules, tp_string("sys"), sys);
     //tp->regs = tp->_regs.list.val->items;
-    DBGPRINT1(DLEVEL, "_tp_init::before tp_full\n");
-    tp_full(tp);
-    DBGPRINT1(DLEVEL, "end:_tp_init\n");
-    return tp;
+    DBGPRINT1(0, "_tp_init::before tp_full\n");
+    tp_full();
+    DBGPRINT1(0, "end:_tp_init\n");
 }
 
 
@@ -565,6 +565,8 @@ tp_obj* tp_import_() {
 }
 
 void tp_builtins() {
+    DBGPRINT1(0, "begin:tp_builtins\n");
+
 /*
     struct {const char *s;void *f;} b[] = {
     {"print",tp_print}, {"range",tp_range}, {"min",tp_min},
@@ -594,15 +596,16 @@ void tp_builtins() {
     }
 */
     //tp_obj *o; // = calloc(1, sizeof(tp_obj));
+    DBGPRINT1(0, "builtins:tp_object\n");
     tp_obj *o = tp_object();
     //fixme
     //error 10: 'lvalue' required for 'assignment' operation.
     //tp_set(tp,o,tp_string("__call__"),tp_fnc(tp,tp_object_call));
     //tp_set(tp,o,tp_string("__new__"),tp_fnc(tp,tp_object_new));
-    DBGPRINT1(9, "adding object to builtins\n");
+    DBGPRINT1(0, "adding object to builtins\n");
     tp_set(tp->builtins,tp_string("object"),o);
-    DBGPRINT1(9, "done adding object to builtins\n");
-
+    DBGPRINT1(0, "done adding object to builtins\n");
+    return;
 }
 
 
@@ -651,13 +654,14 @@ tp_obj* tp_eval(const char *text, tp_obj* globals) {
  * The newly created tinypy instance.
  */
 void tp_init(int argc, char *argv[]) {
-    _tp_init(); //global variable
-    DBGPRINT1(DLEVEL, "\ntp_builtins\n");
+    _tp_init(); //initialize global variable
+    DBGPRINT1(0, "\ntp_init:tp_builtins\n");
     tp_builtins();
-    DBGPRINT1(DLEVEL, "\ntp_args\n");
+    DBGPRINT1(0, "\ntp_args\n");
     //tp_args(tp,argc,argv);
-    DBGPRINT1(DLEVEL, "\ntp_compiler\n");
+    DBGPRINT1(0, "\ntp_compiler\n");
     tp_compiler();
+    DBGPRINT1(0, "\nend:tp_init\n");
     return;
 }
 

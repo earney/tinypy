@@ -44,10 +44,10 @@ vm: clean
 	$(CC) $(CFLAGS) $(INC) -c tinypy/vmmain.c -o build/vmmain.rel
 
 vm1:
-	$(CC) $(CFLAGS) $(INC) build/bc.rel build/builtins.rel build/dict.rel build/gc.rel build/tp_list.rel build/misc.rel build/ops.rel build/tp.rel build/tp_string.rel build/vm.rel build/vmmain.rel -o build/vm.ihx
+	$(CC) $(CFLAGS) $(INC) build/bc.rel build/builtins.rel build/dict.rel build/gc.rel build/tp_list.rel build/misc.rel build/ops.rel build/tp.rel build/tp_string.rel build/vm.rel build/vmmain.rel -o build/python.ihx
 
 sim:
-	sz80 build/vm.ihx
+	sz80 build/python.ihx
 
 vm_test:
 	./tinypy/vm tinpy/tests.tpc

@@ -33,7 +33,7 @@ void _tp_list_realloc(tp_list_ *self,int len) {
     DBGPRINT1(DLEVEL,"\nend:_tp_list_realloc\n");
 }
 
-void _tp_list_set(tp_list_ *self,int k, tp_obj* v, const char *error) {
+void _tp_list_set(tp_list_ *self, int k, tp_obj* v, const char *error) {
     DBGPRINT1(9,"begin:_tp_list_set\n");
     DBGPRINT2(9, "k=%d\n", k);
     DBGPRINT2(9, "self->len=%d\n", self->val->len);
@@ -196,11 +196,11 @@ tp_obj* tp_extend() {
 }
 
 tp_obj* tp_list_nt() {
-    DBGPRINT1(9,"begin:tp_list_nt\n");
+    DBGPRINT1(0,"begin:tp_list_nt\n");
     tp_obj *r=calloc(1, sizeof(tp_obj));
-    DBGPRINT2(8, "calloc:'%d'\n", r);
+    DBGPRINT2(0, "calloc:'%d'\n", r);
     r->obj= (tp_list_*) calloc(1, sizeof(tp_list_));
-    DBGPRINT2(8, "calloc:'%u'\n", r->obj);
+    DBGPRINT2(0, "calloc:'%u'\n", r->obj);
     if (!r->obj) {
        printf("tp_list_nt:out of memory\n");
     }
@@ -212,9 +212,9 @@ tp_obj* tp_list_nt() {
     //DBGPRINT2(9, "ptr:'%u'\n", r->obj->list);
     //r->list = calloc(1, sizeof(tp_list_));
     //assert(r->list->len == 0);
-    DBGPRINT2(8, "type:'%d'\n", r->type);
-    DBGASSERT(9,r->type == TP_LIST);
-    DBGPRINT1(9,"end:tp_list_nt\n");
+    DBGPRINT2(0, "type:'%d'\n", r->type);
+    DBGASSERT(0,r->type == TP_LIST);
+    DBGPRINT1(0,"end:tp_list_nt\n");
     return r;
 }
 
