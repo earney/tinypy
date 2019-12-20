@@ -9,7 +9,6 @@ OBJ= $(SRCC:.c=.rel)
 build/%.rel: tinypy/%.c
 	$(CC) $(CFLAGS) $(INC) -c $<
 
-
 pack:
 	packihx build/vm.ihx > build/vm.hex
 
@@ -24,7 +23,7 @@ test1:
 
 
 DEFINES = -DSDCC -DDEBUG_LEVEL=0
-OPTIMIZE = --opt-code-size
+OPTIMIZE = --opt-code-size --debug
 CFLAGS = -mz80 --verbose $(DEFINES) --std-c99 --disable-warning 126 $(OPTIMIZE)
 ##--stack-auto
 INC = -I/usr/sbin/share/sdcc/include -I. -I./tinypy
@@ -44,7 +43,7 @@ vm: clean
 	$(CC) $(CFLAGS) $(INC) -c tinypy/vmmain.c -o build/vmmain.rel
 
 vm1:
-	$(CC) $(CFLAGS) $(INC) build/bc.rel build/builtins.rel build/dict.rel build/gc.rel build/tp_list.rel build/misc.rel build/ops.rel build/tp.rel build/tp_string.rel build/vm.rel build/vmmain.rel -o build/python.ihx
+	$(CC) $(CFLAGS) $(INC) build/vmmain.rel build/bc.rel build/builtins.rel build/dict.rel build/gc.rel build/tp_list.rel build/misc.rel build/ops.rel build/tp.rel build/tp_string.rel build/vm.rel -o build/python.ihx
 
 sim:
 	sz80 build/python.ihx

@@ -256,6 +256,9 @@ tp_obj* tp_get(tp_obj* self, tp_obj* k) {
         }
     }
 
+    printf("Error! tp_get: type='%d'\n", self->type);
+    DBGPRINT2(0, "tp_get:self->type='%d'\n", self->type);
+    DBGPRINT2(0, "tp_get:k->type='%d'\n", k->type);
     tp_raise(tp_None_ptr,tp_string("(tp_get) TypeError: ?"));
 }
 

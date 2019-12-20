@@ -19,13 +19,15 @@ void _tp_list_realloc(tp_list_ *self,int len) {
        self->val->alloc = 2;
     } else {
        self->val->items = realloc(self->val->items, len*sizeof(tp_obj));
-       if (self->val->items == NULL) {
-          printf("_tp_list_realloc:Cannot allocate memory..\n");
-          printf("Cannot allocate %d bytes of memory\n", len*sizeof(tp_obj));
-          exit(0);
-       }
        self->val->alloc = len;
     }
+
+    if (self->val->items == NULL) {
+       printf("_tp_list_realloc:Cannot allocate memory..\n");
+       printf("Cannot allocate %d bytes of memory\n", len*sizeof(tp_obj));
+       exit(0);
+    }
+
 
     DBGPRINT2(DLEVEL, "items ptr=%d\n", self->val->items);
     DBGPRINT2(DLEVEL, "len=%d\n", self->val->len);
@@ -141,8 +143,20 @@ tp_obj* tp_index() {
 
 tp_list_ *_tp_list_new() {
     tp_list_ * l = calloc(1, sizeof(tp_list_));
+    if (!l) {
+       printf("Error! Cannot allocate memory\n");
+       exit(0);
+    }
     l->val = calloc(1, sizeof(_tp_list));
+    if (!(l->val)) {
+       printf("Error! Cannot allocate memory\n");
+       exit(0);
+    }
     l->val->items = calloc(1, sizeof(tp_obj));
+    if (!(l->val->items)) {
+       printf("Error! Cannot allocate memory\n");
+       exit(0);
+    }
     l->val->alloc=1;
 
     return l;
@@ -159,7 +173,7 @@ tp_obj* _tp_list_copy(tp_obj* rr) {
     r->val->items = calloc(o->val->len, sizeof(tp_obj));
     memcpy(r->val->items,o->val->items, sizeof(tp_obj)*(o->val->len));
 
-    val->obj=(tp_list_*) calloc(1, sizeof(tp_list_));
+    //val->obj=(tp_list_*) calloc(1, sizeof(tp_list_));
     val->obj = r;
     return tp_track(val);
 }
@@ -198,12 +212,16 @@ tp_obj* tp_extend() {
 tp_obj* tp_list_nt() {
     DBGPRINT1(0,"begin:tp_list_nt\n");
     tp_obj *r=calloc(1, sizeof(tp_obj));
-    DBGPRINT2(0, "calloc:'%d'\n", r);
-    r->obj= (tp_list_*) calloc(1, sizeof(tp_list_));
-    DBGPRINT2(0, "calloc:'%u'\n", r->obj);
-    if (!r->obj) {
-       printf("tp_list_nt:out of memory\n");
+    if (!r) {
+      printf("tp_list_nt:Error! Cannot allocate memory\n");
+      exit(0);
     }
+    DBGPRINT2(0, "calloc:'%d'\n", r);
+    //r->obj= (tp_list_*) calloc(1, sizeof(tp_list_));
+    //DBGPRINT2(0, "calloc:'%u'\n", r->obj);
+    //if (!r->obj) {
+    //   printf("tp_list_nt:out of memory\n");
+    //}
     r->obj = _tp_list_new();
     tp_list_* l = TP_TO_LIST(r->obj);
     l->val->len=0;

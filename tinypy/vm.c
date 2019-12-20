@@ -555,6 +555,7 @@ tp_obj* tp_exec_() {
 
 
 tp_obj* tp_import_() {
+    DBGPRINT1(0, "tp_import_");
     tp_obj* mod = TP_OBJ();
 
     if (TP_TO_NUMBER(tp_has(tp->modules,mod)->obj)->val) {
@@ -566,6 +567,7 @@ tp_obj* tp_import_() {
 
 void tp_builtins() {
     DBGPRINT1(0, "begin:tp_builtins\n");
+    printf("begin:tp_builtins\n");
 
 /*
     struct {const char *s;void *f;} b[] = {
@@ -608,7 +610,7 @@ void tp_builtins() {
     return;
 }
 
-
+/*
 void tp_args(int argc, char *argv[]) {
     tp_obj* self = tp_list();
     for (int i=1; i<argc; i++) {
@@ -616,6 +618,7 @@ void tp_args(int argc, char *argv[]) {
     }
     tp_set(tp->builtins,tp_string("ARGV"),self);
 }
+*/
 
 tp_obj* tp_main(char *fname, void *code, int len) {
     return tp_import(fname,"__main__",code, len);
@@ -626,6 +629,7 @@ tp_obj* tp_main(char *fname, void *code, int len) {
  *
  */
 tp_obj* tp_compile(tp_obj* text, tp_obj* fname) {
+    DBGPRINT1(0, "tp_compile\n");
     return tp_ez_call("BUILTINS","compile",tp_params_v(2,text,fname));
 }
 
@@ -656,6 +660,7 @@ tp_obj* tp_eval(const char *text, tp_obj* globals) {
 void tp_init(int argc, char *argv[]) {
     _tp_init(); //initialize global variable
     DBGPRINT1(0, "\ntp_init:tp_builtins\n");
+    DBGPRINT1(0, "\ntp_init:tp_builtins1\n");
     tp_builtins();
     DBGPRINT1(0, "\ntp_args\n");
     //tp_args(tp,argc,argv);

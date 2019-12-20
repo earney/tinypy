@@ -65,6 +65,7 @@ int tp_hash(tp_obj* v) {
         case TP_DATA: return tp_lua_hash(TP_TO_DATA(v->obj)->val,sizeof(void*));
 #endif
     }
+    DBGPRINT2(0, "type:%d\n", v->type);
     DBGPRINT1(DLEVEL, "end:tp_hash\n");
     tp_raise(0,tp_string("(tp_hash) TypeError: value unhashable"));
 }
@@ -211,6 +212,7 @@ tp_obj* _tp_dict_get(_tp_dict *self,tp_obj* k, const char *error) {
     int n = _tp_dict_find(self,k);
     if (n < 0) {
         error="_tp_dict_get:fixme";
+        printf("_tp_dict_get error..\n");
         tp_raise(tp_None_ptr,tp_add(tp_string("(_tp_dict_get) KeyError: "),tp_str(k)));
     }
     return self->items[n].val;
@@ -220,6 +222,7 @@ void _tp_dict_del(_tp_dict *self,tp_obj* k, const char *error) {
     int n = _tp_dict_find(self,k);
     if (n < 0) {
         error="_tp_dict_del:fixme";
+        printf("_tp_dict_del error..\n");
         tp_raise(,tp_add(tp_string("(_tp_dict_del) KeyError: "),tp_str(k)));
     }
     self->items[n].used = -1;

@@ -81,7 +81,7 @@ tp_obj* tp_number(tp_num v) {
 
 tp_inline_static void tp_echo(tp_obj* e) {
     //DBGASSERT(9, e->type == TP_STRING);
-    //DBGPRINT1(9,"begin:tp_echo:\n");
+    //DBGPRINT1(0,"begin:tp_echo:\n");
     //DBGPRINT2(9, "%s\n", e->string.val);
     if (e->type != TP_STRING) {
       e=tp_str(e);

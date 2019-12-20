@@ -16,7 +16,7 @@ void tp_grey(tp_obj* v) {
          return;
        case TP_STRING:
        case TP_DATA:
-         // fix me  *(v->gci->data) = 1;
+         v->gci.data = 1;
          _tp_list_appendx(tp->black,v);
          DBGPRINT2(DLEVEL, "end:tp_grey,'%d'\n", v->type);
          return;
@@ -133,7 +133,7 @@ void tp_delete(tp_obj* v) {
     v->obj=NULL;
     free(v);
     v=NULL;
-    DBGPRINT1(9, "end:_tp_delete\n");
+    DBGPRINT2(0, "end:_tp_delete type='%d'\n", v->type);
     tp_raise(,tp_string("(tp_delete) TypeError: ?"));
 }
 

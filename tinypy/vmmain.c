@@ -26,7 +26,7 @@ int main(int argc, char *argv[]) {
     DBGPRINT1(DLEVEL, "begin:vmmain\n");
     char* arg[] = {""};
     //tp_vm *tp = tp_init(argc,argv);
-    //tp_vm *tp = tp_init(0, arg);
+    //tp_vm *tp = tp_init(0,n arg);
     tp_init(0, arg);
     //tp_import(tp,argv[1],"__main__",0,0);
     DBGPRINT1(DLEVEL, "\nimport main module\n");

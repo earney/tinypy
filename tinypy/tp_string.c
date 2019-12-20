@@ -104,6 +104,7 @@ tp_obj* tp_join() {
 
     for (i=0; i < v->val->len; i++) {
         if (i!=0) l += d1->len;
+        DBGPRINT1(0, "in tp_join\n");
         l += TP_TO_STRING(tp_str(&(v->val->items[i]))->obj)->len;
     }
     r = tp_string_t(l);

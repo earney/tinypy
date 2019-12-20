@@ -125,14 +125,14 @@ typedef struct tp_data_ {
 
 typedef struct tp_gci_ {
      unsigned char type;
-     int *data;
+     unsigned char *data;
 } gci;
 
 
 typedef struct tp_obj {
     tp_obj_type type;
     void * obj;
-    struct { unsigned char type; int *data; } gci;
+    gci gci; //struct { unsigned char type; int *data; } gci;
 } tp_obj;
 
 
