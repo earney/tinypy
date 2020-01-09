@@ -25,7 +25,8 @@ tp_obj* tp_str(tp_obj* self) {
     // DBGPRINT2("tp_str:self->type:'%d'\n", self->type);
     switch(self->type) {
       case TP_STRING :return self;
-      case TP_NUMBER:{
+      case TP_NUMBER:
+        ;
         //tp_num v = self->number.val;
         float v = TP_TO_NUMBER(self->obj)->val;
         float f =tp_fabs(v)-tp_fabs((long)(v));
@@ -34,7 +35,6 @@ tp_obj* tp_str(tp_obj* self) {
            return tp_printf("%ld",tp_number(v));
         }
         return tp_printf("%f",v);
-        }
       case TP_DICT:
         return tp_printf("<dict 0x%x>",TP_TO_DICT(self->obj)->val);
       case TP_LIST:
@@ -45,11 +45,13 @@ tp_obj* tp_str(tp_obj* self) {
       case TP_DATA:
         return tp_printf("<data 0x%x>",TP_TO_DATA(self->obj)->val);
 #endif
+#ifdef TP_FNC
       case TP_FNC:
         return tp_printf("<fnc 0x%x>",TP_TO_FNC(self->obj)->info);
+#endif
     }
 
-    DBGPRINT2(9, "tp_str:self->type:'%d'\n", self->type);
+    DBGPRINT2(0, "tp_str:self->type:'%d'\n", self->type);
     return tp_printf("<type:'%d'>", self->type);
 }
 
@@ -80,14 +82,13 @@ int tp_bool(tp_obj* v) {
 tp_obj* tp_has(tp_obj* self, tp_obj* k) {
     switch(self->type) {
       case TP_DICT:
-        if (_tp_dict_find(TP_TO_DICT(self->obj)->val,k) != -1) return tp_True;
-        return tp_False;
+        return _tp_dict_find(TP_TO_DICT(self->obj)->val,k) != -1?tp_True:tp_False;
       case TP_STRING:
         if (k->type == TP_STRING)
-           return tp_number(_tp_str_index(self,k)!=-1);
+           return tp_number(_tp_str_index(self,k)!=-1?1:0);
         break;
       case TP_LIST:
-        return tp_number(_tp_list_find(TP_TO_LIST(self->obj),k)!=-1);
+        return tp_number(_tp_list_find(TP_TO_LIST(self->obj),k)!=-1?1:0);
     }
     tp_raise(tp_None_ptr,tp_string("(tp_has) TypeError: iterable argument required"));
 }
@@ -180,11 +181,13 @@ tp_obj* tp_get(tp_obj* self, tp_obj* k) {
             n = (n<0?l+n:n);
             return _tp_list_get(TP_TO_LIST(self->obj),n,"tp_get");
           case TP_STRING:
-            if (tp_cmp(tp_string("append"),k) == 0) return tp_method(self,tp_append);
+            if (tp_cmp(tp_string("append"),k) == 0)
+               return tp_method(self,tp_append);
             if (tp_cmp(tp_string("pop"),k) == 0)  return tp_method(self,tp_pop);
             if (tp_cmp(tp_string("index"),k) == 0) return tp_method(self,tp_index);
             if (tp_cmp(tp_string("sort"),k) == 0) return tp_method(self,tp_sort);
-            if (tp_cmp(tp_string("extend"),k) == 0) return tp_method(self,tp_extend);
+            //fix me
+            //if (tp_cmp(tp_string("extend"),k) == 0) return tp_method(self,tp_extend);
             if (tp_cmp(tp_string("*"),k) == 0) {
                 tp_params_v(1,self);
                 tp_obj *r=calloc(1, sizeof(tp_obj));
@@ -304,7 +307,7 @@ void tp_set(tp_obj* self, tp_obj* k, tp_obj* v) {
     //printf("\n");
     switch(self->type) {
       case TP_DICT:
-        DBGPRINT1(0,"is a TP_DICT\n");
+        DBGPRINT1(9,"is a TP_DICT\n");
         tp_dict_* d = TP_TO_DICT(self->obj);
         if (d->dtype == 2) {
            tp_obj * meta = calloc(1, sizeof(tp_obj));
@@ -313,7 +316,7 @@ void tp_set(tp_obj* self, tp_obj* k, tp_obj* v) {
               return;
            }
         }
-        DBGPRINT2(0,"k.type='%d'\n", k->type);
+        DBGPRINT2(8,"k.type='%d'\n", k->type);
         _tp_dict_set(d->val,k,v);
         return;
       case TP_LIST:
@@ -322,14 +325,7 @@ void tp_set(tp_obj* self, tp_obj* k, tp_obj* v) {
               _tp_list_set(TP_TO_LIST(self->obj),TP_TO_NUMBER(k->obj)->val,v,"tp_set");
               return;
           case TP_NONE:
-              //assert(self->obj->list->val->len >=0);
-              //assert(self->obj->list->val->alloc >=0);
-              //DBGPRINT2(9, "alloc='%d'", self->obj->list->val->alloc);
               _tp_list_append(TP_TO_LIST(self->obj),v);
-              //assert(self->type == TP_LIST);
-              //DBGPRINT2(9, "len='%d'", self->obj->list->val->len);
-              //DBGPRINT2(9, "alloc='%d'", self->obj->list->val->alloc);
-              //assert(self->obj->list->val->alloc >=0);
               return;
           case TP_STRING:
               if (tp_cmp(tp_string("*"),k) == 0) {
@@ -448,14 +444,14 @@ int tp_cmp(tp_obj* a, tp_obj* b) {
             tp_list_ *_a=TP_TO_LIST(a->obj);
             tp_list_ *_b=TP_TO_LIST(b->obj);
             int _l = _tp_min(_a->val->len, _b->val->len);
-            tp_obj aa, bb;
+            //tp_obj aa, bb;
             for(int n=0; n < _l; n++) {
-                aa = _a->val->items[n];
-                bb = _b->val->items[n];
-                if (aa.type == TP_LIST && bb.type == TP_LIST) {
-                   v = TP_TO_LIST(aa.obj)->val - TP_TO_LIST(bb.obj)->val;
+                //aa = _a->val->items[n];
+                //bb = _b->val->items[n];
+                if (_a->val->items[n].type == TP_LIST && _b->val->items[n].type == TP_LIST) {
+                   v = TP_TO_LIST(_a->val->items[n].obj)->val - TP_TO_LIST(_b->val->items[n].obj)->val;
                 } else {
-                   v = tp_cmp(&aa,&bb);
+                   v = tp_cmp(&(_a->val->items[n]),&(_b->val->items[n]));
                 }
                 if (v) return v;
             }

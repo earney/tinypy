@@ -2,12 +2,6 @@
  * Various tinypy operations.
  */
 
-/* Function: tp_str
- * String representation of an object.
- *
- * Returns a string object representating self.
- */
-
 #ifndef OPS_H
 #define OPS_H
 

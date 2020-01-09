@@ -23,9 +23,12 @@ tp_obj* tp_fnc_new(int t, void *v, tp_obj* c, tp_obj* s, tp_obj* g) {
     tp_obj * r = calloc(1, sizeof(tp_obj));
     r->type = TP_FNC;
     _tp_fnc *info = calloc(1, sizeof(_tp_fnc));
-    info->code = *c;
-    info->self = *s;
-    info->globals = *g;
+    //info->code = *c;
+    memcpy(&(info->code), c, sizeof(tp_obj));
+    //info->self = *s;
+    memcpy(&(info->self), s, sizeof(tp_obj));
+    //info->globals = *g;
+    memcpy(&(info->globals), g, sizeof(tp_obj));
 
     r->obj = (tp_fnc_*) calloc(1, sizeof(tp_fnc_));
 
@@ -55,7 +58,7 @@ tp_obj* tp_fnc(tp_obj* v()) {
 
 #endif
 
-tp_obj* tp_method(tp_obj* self, tp_obj* v()) {
+tp_obj* tp_method(tp_obj* self, tp_obj* (*v)()) {
     return tp_fnc_new(2,v,tp_None_ptr,self,tp_None_ptr);
 }
 
@@ -157,13 +160,28 @@ tp_obj* tp_params_n(int n, tp_obj* argv[]) {
  * A tinypy list object representing the current call parameters. You can modify
  * the list before doing the function call.
  */
+
+#if defined(Z80) || defined(MCS51)
 tp_obj* tp_params_v(int n,...) {
     tp_obj* r = tp_params();
     va_list* a;
-    va_start(a,n);
+    va_start(*a,n);
     tp_list_* l = TP_TO_LIST(r->obj);
 
     for (int i=0; i<n; i++) _tp_list_append(l,&(va_arg(a,tp_obj)));
     va_end(a);
     return r;
 }
+#else
+tp_obj* tp_params_v(int n,...) {
+    tp_obj* r = tp_params();
+    va_list* a;
+    va_start(*a,n);
+    tp_list_* l = TP_TO_LIST(r->obj);
+
+    tp_obj tmp = va_arg(*a, tp_obj);
+    for (int i=0; i<n; i++) _tp_list_append(l, &tmp);
+    va_end(*a);
+    return r;
+}
+#endif

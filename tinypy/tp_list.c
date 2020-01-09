@@ -13,7 +13,7 @@ void _tp_list_realloc(tp_list_ *self,int len) {
     DBGPRINT2(DLEVEL, "alloc=%d\n", self->val->alloc);
     DBGPRINT2(DLEVEL, "self->val->len=%d\n", self->val->len);
     if (!len) len=1;
-    DBGPRINT2(DLEVEL, "items ptr=%d\n", self->val->items);
+    //DBGPRINT2(DLEVEL, "items ptr=%d\n", self->val->items);
     if (self->val->len == 0) {
        self->val->items = calloc(2, sizeof(tp_obj));
        self->val->alloc = 2;
@@ -24,12 +24,12 @@ void _tp_list_realloc(tp_list_ *self,int len) {
 
     if (self->val->items == NULL) {
        printf("_tp_list_realloc:Cannot allocate memory..\n");
-       printf("Cannot allocate %d bytes of memory\n", len*sizeof(tp_obj));
+       printf("Cannot allocate %lu bytes of memory\n", len*sizeof(tp_obj));
        exit(0);
     }
 
 
-    DBGPRINT2(DLEVEL, "items ptr=%d\n", self->val->items);
+    //DBGPRINT2(DLEVEL, "items ptr=%d\n", self->val->items);
     DBGPRINT2(DLEVEL, "len=%d\n", self->val->len);
     DBGPRINT2(DLEVEL, "alloc=%d\n", self->val->alloc);
     DBGPRINT1(DLEVEL,"\nend:_tp_list_realloc\n");
@@ -39,13 +39,14 @@ void _tp_list_set(tp_list_ *self, int k, tp_obj* v, const char *error) {
     DBGPRINT1(9,"begin:_tp_list_set\n");
     DBGPRINT2(9, "k=%d\n", k);
     DBGPRINT2(9, "self->len=%d\n", self->val->len);
-    DBGASSERT(9, self->val->len >= 0);
+    //DBGASSERT(9, self->val->len >= 0);
     if (k >= self->val->len) {
         DBGPRINT2(9, "k=%d", k);
         DBGPRINT2(9, "self->len=%d", self->val->len);
         tp_raise(,tp_string("(_tp_list_set) KeyError"));
     }
-    self->val->items[k] = *v;
+    //self->val->items[k] = *v;
+    memcpy(self->val->items + k * sizeof(tp_item), v, sizeof(tp_item));
     tp_grey(v);
     DBGPRINT1(9,"end:_tp_list_set\n");
 }
@@ -83,7 +84,8 @@ void _tp_list_insertx(tp_list_ *self, int n, tp_obj* v) {
                sizeof(tp_obj)*(self->val->len-n));
        DBGPRINT2(9, "\nlist after memmove alloc %d\n", self->val->alloc);
     }
-    self->val->items[n] = *v;
+    //self->val->items[n] = *v;
+    memcpy(self->val->items + n * sizeof(tp_item), v, sizeof(tp_item));
     self->val->len += 1;
 
     DBGPRINT2(9, "\nlist len %d\n", self->val->len);
@@ -97,7 +99,7 @@ void _tp_list_appendx(tp_list_ *self, tp_obj* v) {
 
 void _tp_list_insert(tp_list_ *self, int n, tp_obj* v) {
     DBGPRINT1(9,"begin:_tp_list_insert\n");
-    DBGASSERT(9,self->val->len >=0);
+    //DBGASSERT(9,self->val->len >=0);
     _tp_list_insertx(self,n,v);
     tp_grey(v);
     DBGPRINT1(9,"end:_tp_list_insert\n");
@@ -105,7 +107,7 @@ void _tp_list_insert(tp_list_ *self, int n, tp_obj* v) {
 }
 void _tp_list_append(tp_list_ *self, tp_obj* v) {
     DBGPRINT1(9,"begin:_tp_list_append\n");
-    DBGASSERT(9,self->val->len >=0);
+    //DBGASSERT(9,self->val->len >=0);
     DBGASSERT(9,self->val->alloc >=0);
     _tp_list_insert(self,self->val->len,v);
     DBGPRINT2(9,"alloc = '%d' \n", self->val->alloc);
@@ -198,6 +200,7 @@ tp_obj* tp_insert() {
     return tp_None_ptr;
 }
 
+
 tp_obj* tp_extend() {
     tp_obj* self = TP_OBJ();
     tp_obj* v = TP_OBJ();
@@ -209,14 +212,15 @@ tp_obj* tp_extend() {
     return tp_None_ptr;
 }
 
+
 tp_obj* tp_list_nt() {
-    DBGPRINT1(0,"begin:tp_list_nt\n");
+    DBGPRINT1(9,"begin:tp_list_nt\n");
     tp_obj *r=calloc(1, sizeof(tp_obj));
     if (!r) {
       printf("tp_list_nt:Error! Cannot allocate memory\n");
       exit(0);
     }
-    DBGPRINT2(0, "calloc:'%d'\n", r);
+    //DBGPRINT2(9, "calloc:'%d'\n", r);
     //r->obj= (tp_list_*) calloc(1, sizeof(tp_list_));
     //DBGPRINT2(0, "calloc:'%u'\n", r->obj);
     //if (!r->obj) {
@@ -230,9 +234,9 @@ tp_obj* tp_list_nt() {
     //DBGPRINT2(9, "ptr:'%u'\n", r->obj->list);
     //r->list = calloc(1, sizeof(tp_list_));
     //assert(r->list->len == 0);
-    DBGPRINT2(0, "type:'%d'\n", r->type);
-    DBGASSERT(0,r->type == TP_LIST);
-    DBGPRINT1(0,"end:tp_list_nt\n");
+    DBGPRINT2(9, "type:'%d'\n", r->type);
+    DBGASSERT(9,r->type == TP_LIST);
+    DBGPRINT1(9,"end:tp_list_nt\n");
     return r;
 }
 

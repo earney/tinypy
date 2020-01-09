@@ -16,7 +16,7 @@
 tp_obj* tp_string_t(int n) {
     tp_obj *r = tp_string_n(0,n);
     tp_string_* s1 = TP_TO_STRING(r->obj);
-    memcpy(s1->val, 0, n); //, r->string.info->s;
+    memset(s1->val, 0, n); //, r->string.info->s;
     s1->len=n;
     return r;
 }
@@ -64,12 +64,12 @@ tp_obj* tp_printf(char const *fmt,...) {
     va_start(arg, fmt);
     //SDCC doesnot have vsnprintf..
     //l = vsnprintf(NULL, 0, fmt,arg);
-    #if defined(HAVE_VSNPRINTF)
+    //#if defined(HAVE_VSNPRINTF)
        l = vsnprintf(NULL, 0, fmt, arg);
-    #else
-       vsprintf(NULL, fmt, arg);
-       l = strlen(NULL) + 1;
-    #endif
+    //#else
+    //   vsprintf(NULL, fmt, arg);
+    //   l = strlen(NULL) + 1;
+    //#endif
 
     r = tp_string_t(l);
     //s = r->string.info->s;

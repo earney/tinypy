@@ -85,14 +85,15 @@ void _tp_dict_hash_set(_tp_dict *self, int hash, tp_obj* k, tp_obj* v) {
         tp_item * item = calloc(1, sizeof(tp_item));
         if (!item) {
            printf("_tp_dict_hash_set:out of memory..\n");
-           printf("Cannot allocate %d bytes of memory\n", sizeof(tp_item));
+           printf("Cannot allocate %lu bytes of memory\n", sizeof(tp_item));
            exit(0);
         }
         item->used = 1;
         item->hash = hash;
         item->key = k;
         item->val = v;
-        self->items[n] = *item;
+        //self->items[n] = *item;
+        memcpy(self->items + n * sizeof(tp_item), item, sizeof(tp_item));
         self->len += 1;
         DBGPRINT1(9, "end:_tp_dict_hash_set\n");
         return;
@@ -124,7 +125,7 @@ void _tp_dict_tp_realloc(_tp_dict *self,int len) {
     DBGPRINT1(9, "dict:after calloc\n");
     if (self->items == NULL) {
        printf("tp_dict_tp_realloc..  out of memory\n");
-       printf("Cannot allocate %d bytes of memory\n", len*sizeof(tp_item));
+       printf("Cannot allocate %lu bytes of memory\n", len*sizeof(tp_item));
        exit(0);
     }
     self->alloc = len;

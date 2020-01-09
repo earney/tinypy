@@ -16,7 +16,8 @@
 #include <assert.h>
 
 #ifdef __GNUC__
-#define tp_inline __inline__
+//#define tp_inline __inline__
+#define tp_inline
 #endif
 
 #ifdef _MSC_VER
@@ -24,9 +25,10 @@
 #define tp_inline __inline
 #else
 /* don't inline in debug builds (for easier debugging) */
-#define tp_inline
+## #define tp_inline
 #endif
 #endif
+
 
 
 #define DBGASSERT(level, x) do {\
@@ -39,19 +41,11 @@
 } while (0)
 
 #define DBGPRINT1(level, x) do {\
-   if (DEBUG_LEVEL >= level) \
-       printf(x);\
+   if (DEBUG_LEVEL >= level) printf("%s", x);\
 } while (0)
 
-#if 1
-#define SDCC 1
-#define tp_inline __inline
-#define tp_inline_static
-#define clock_t int
-#define double float
-#else
-#define tp_inline_static tp_inline static
-#endif
+// #define tp_inline_static tp_inline static
+#define tp_inline_static tp_inline
 
 
 //#ifndef tp_inline
@@ -73,7 +67,7 @@ typedef struct tp_number_ {
 
 typedef struct tp_string_ {
     char *val;
-    unsigned char len;
+    int len;
 } tp_string_;
 
 typedef struct tp_list_ {
@@ -82,13 +76,13 @@ typedef struct tp_list_ {
 
 typedef struct tp_dict_ {
     struct _tp_dict *val;
-    unsigned char dtype;
+    int dtype;
 } tp_dict_;
 
 
 typedef struct tp_fnc_ {
     struct _tp_fnc *info;
-    unsigned char ftype;
+    int ftype;
     void *cfnc;
 } tp_fnc_;
 
@@ -124,8 +118,8 @@ typedef struct tp_data_ {
  */
 
 typedef struct tp_gci_ {
-     unsigned char type;
-     unsigned char *data;
+     int type;
+     int data;
 } gci;
 
 
@@ -145,21 +139,21 @@ typedef struct _tp_string {
 */
 
 typedef struct _tp_list {
-    unsigned char gci;
+    int gci;
     tp_obj *items;
-    unsigned char len;
+    int len;
     int alloc;
 } _tp_list;
 
 typedef struct tp_item {
-    char used;
+    int used;
     int hash;
     tp_obj *key;
     tp_obj *val;
 } tp_item;
 
 typedef struct _tp_dict {
-    unsigned char gci;
+    int gci;
     tp_item *items;
     int len;
     int alloc;
@@ -170,7 +164,7 @@ typedef struct _tp_dict {
 } _tp_dict;
 
 typedef struct _tp_fnc {
-    unsigned char gci;
+    int gci;
     tp_obj self;
     tp_obj globals;
     tp_obj code;
@@ -179,7 +173,7 @@ typedef struct _tp_fnc {
 
 typedef union tp_code {
     int i;
-    struct { unsigned char i,a,b,c; } regs;
+    struct { int i,a,b,c; } regs;
     struct { char val[4]; } string;
     struct { float val; } number;
 } tp_code;

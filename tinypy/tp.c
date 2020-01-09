@@ -5,7 +5,7 @@
 #include <stdio.h>
 
 #include "tp.h"
-#include "bc.c"
+#include "bc.h"
 #include "vm.h"
 #include "builtins.h"
 
@@ -14,6 +14,7 @@
 #endif
 
 extern void exit(int);
+//extern unsigned char tp_main1[];
 
 /*
 #if TP_COMPILER
@@ -32,7 +33,7 @@ void tp_compiler(TP) {
 
 
 void tp_compiler() {
-   tp_import(0,"main1",tp_main1,sizeof(tp_main1));
+//   tp_import(0,"main1",tp_main1,strlen(tp_main1));
 }
 
 tp_obj* tp_string(char const *v) {
@@ -106,7 +107,7 @@ tp_obj* tp_string_n(char const *v,int n) {
     tp_obj * o = calloc(1, sizeof(tp_obj));
     if (!o) {
         printf("tp_string_n:Error cannot allocate memory\n");
-        printf("string='%s', size='%d'\n", v, sizeof(tp_obj));
+        printf("string='%s', size='%lu'\n", v, sizeof(tp_obj));
         exit(0);
     }
     //static tp_string_ s = {TP_STRING, 0,v,n};

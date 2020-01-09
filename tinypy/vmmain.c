@@ -5,18 +5,29 @@
 
 #define DLEVEL 0
 
+
+#if defined(Z80) || defined(MCS51)
 int putchar(int c) __naked
 {
     __asm
 
+#ifdef Z80
     ld   hl, #2
     add  hl, sp
     ld   l, (hl)
     ld   a, #1
     rst  0x08
     ret
+#endif
+
+#ifdef MCS51
+
+#endif
   __endasm;
 }
+#endif
+
+//extern unsigned char tp_main1[];
 
 int main(int argc, char *argv[]) {
     //if (argc != 2) {
